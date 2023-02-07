@@ -194,6 +194,7 @@ function animate() {
     raycaster.ray.origin.copy(controls.getObject().position);
     raycaster.ray.origin.y -= 10;
 
+    
     const intersections = raycaster.intersectObjects(objects, false);
     const onObject = intersections.length > 0;
     const delta = (time - prevTime) / 1000;
@@ -217,6 +218,7 @@ function animate() {
 
     controls.moveRight(- velocity.x * delta);
     controls.moveForward(- velocity.z * delta);
+
     controls.getObject().position.y += (velocity.y * delta); // new behavior
 
     if (controls.getObject().position.y < 10) {

@@ -40,6 +40,7 @@ const buildOptions = {
                 build.onEnd((result) => {
                     if (result.errors.length > 0) {
                         console.log("\u001b[31mESM Build failed!\u001b[37m")
+                        console.log("\u001b[31mTypeScript declarations generation skipped!\u001b[37m")
                         process.exit(1)
                     }
                     execSync("npx tsc --emitDeclarationOnly")
@@ -76,7 +77,7 @@ if (dev) {
     // Enable serve mode
     await ctx.serve({
         servedir: "public",
-        port: 8080,
+        port: 8081,
         onRequest: (args) => {
             if (args.path === "/") {
                 args.path = "/index.html"

@@ -20,7 +20,7 @@
       "experimentalDecorators": true,
       "resolveJsonModule": true,
       //"inlineSources": true,
-      "moduleResolution": "Node",
+      "moduleResolution": "node",
       "forceConsistentCasingInFileNames": true,
       "noImplicitReturns": true,
       "noImplicitThis": true,

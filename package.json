@@ -16,7 +16,8 @@
   "author": "Elia Lazzari",
   "license": "MIT",
   "dependencies": {
-    "three": "^0.149.0"
+    "three": "^0.149.0",
+    "typescript": "^4.9.5"
   },
   "bugs": {
     "url": "https://github.com/Elius94/virtual-gallery/issues"

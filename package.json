@@ -1,0 +1,36 @@
+{
+  "name": "virtual-gallery",
+  "version": "1.0.0",
+  "description": "",
+  "main": "public/dist/index.js",
+  "types": "public/dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "./"
+  ],
+  "scripts": {
+    "lint": "eslint ./src/ --ext .ts",
+    "build": "node ./esbuild.js && npx seo-injector --build-dir public --pretty true --verbose true",
+    "start": "node ./esbuild.js --watch --dev"
+  },
+  "author": "Elia Lazzari",
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.149.0"
+  },
+  "bugs": {
+    "url": "https://github.com/Elius94/virtual-gallery/issues"
+  },
+  "homepage": "https://github.com/Elius94/virtual-gallery#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Elius94/virtual-gallery.git"
+  },
+  "devDependencies": {
+    "@types/three": "^0.149.0",
+    "esbuild": "^0.17.5",
+    "eslint": "^8.33.0",
+    "figlet": "^1.5.2",
+    "typescript-eslint": "^0.0.1-alpha.0"
+  }
+}

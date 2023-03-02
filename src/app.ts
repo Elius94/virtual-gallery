@@ -1,24 +1,25 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import "./app.css";
+import Scene from './scene';
+import Floor from './floor';
+import Ceiling from './ceiling';
+import Player from './player';
+import Renderer from './renderer';
+import Walls from './walls';
 
 const room = {
-  width: 600,
-  height: 200,
-  depth: 600
+  width: 2200,
+  height: 400,
+  depth: 1300
 }
 
-let scene: THREE.Scene;
-let camera: THREE.PerspectiveCamera;
-let renderer: THREE.WebGLRenderer;
-
-let walls: THREE.Mesh[] = [];
-let floor: THREE.Mesh;
-let ceiling: THREE.Mesh;
-
-const wallMaterial = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('textures/General/bricks.jpg') });
-const floorMaterial = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('textures/General/wood.jpg') });
-const ceilingMaterial = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('textures/General/concrete.jpg') });
+let scene: Scene;
+let player: Player;
+let renderer: Renderer;
+let floor: Floor;
+let ceiling: Ceiling;
+let walls: Walls;
 
 const light1 = new THREE.PointLight(0xffffff, 1, 100);
 light1.position.set(-300, 200, 200);
@@ -48,65 +49,29 @@ init();
 animate();
 
 function init() {
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xffffff);
-  scene.fog = new THREE.Fog(0xffffff, 0, 2000);
+  scene = new Scene();
+  player = new Player({ height: 100 });
+  renderer = new Renderer(window.innerWidth, window.innerHeight, window.devicePixelRatio);
+  document.body.appendChild(renderer.getDomElement());
 
-  const light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
-  light.position.set(0.5, 1, 0.75);
-  scene.add(light);
-
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 10, 0);
-
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
-
-  const planeGeometryWalls = new THREE.BoxGeometry(room.depth, room.height, 10);
-  const color = new THREE.Color(0x444444);
-  planeGeometryWalls.setAttribute('color', new THREE.Float32BufferAttribute(color, 3));
-
-  for (let i = 0; i < 4; i++) {
-    const wall = new THREE.Mesh(planeGeometryWalls, wallMaterial);
-    if (i === 0) {
-      wall.position.set(0, room.height / 2, -(room.depth / 2));
-      wall.rotation.y = Math.PI;
-    } else if (i === 1) {
-      wall.position.set(room.depth / 2, room.height / 2, 0);
-      wall.rotation.y = Math.PI / 2;
-    } else if (i === 2) {
-      wall.position.set(0, room.height / 2, room.depth / 2);
-      wall.rotation.y = Math.PI;
-    } else {
-      wall.position.set(-(room.depth / 2), room.height / 2, 0);
-      wall.rotation.y = Math.PI / 2;
-    }
-    walls.push(wall);
+  walls = new Walls(room.depth, room.width, room.height);
+  walls.getWalls().forEach(wall => {
     scene.add(wall);
-  }
+    objects.push(wall);
+  });
 
+  floor = new Floor(room.depth, room.width);
+  scene.add(floor.getFloor());
 
-  const planeGeometry = new THREE.BoxGeometry(room.depth, room.width, 10);
-  planeGeometry.setAttribute('color', new THREE.Float32BufferAttribute(color, 3));
-
-  floor = new THREE.Mesh(planeGeometry, floorMaterial);
-  floor.position.set(0, 0, 0);
-  floor.rotation.x = Math.PI / 2;
-  scene.add(floor);
-
-  ceiling = new THREE.Mesh(planeGeometry, ceilingMaterial);
-  ceiling.position.set(0, room.height, 0);
-  ceiling.rotation.x = Math.PI / 2;
-  scene.add(ceiling);
+  ceiling = new Ceiling(room.depth, room.width, room.height);
+  scene.add(ceiling.getCeiling());
 
   scene.add(light1);
   scene.add(light2);
   scene.add(light3);
   scene.add(light4);
 
-  controls = new PointerLockControls(camera, document.body);
+  controls = new PointerLockControls(player.getPlayer(), document.body);
   const blocker = document.getElementById('blocker') as HTMLElement;
   const instructions = document.getElementById('instructions') as HTMLElement;
 
@@ -177,9 +142,8 @@ function init() {
   document.addEventListener('keyup', onKeyUp, false);
 
   const onWindowResize = function () {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    player.resize(window.innerWidth, window.innerHeight);
+    renderer.resize(window.innerWidth, window.innerHeight);
   };
 
   window.addEventListener('resize', onWindowResize, false);
@@ -199,10 +163,10 @@ function animate() {
     const onObject = intersections.length > 0;
     const delta = (time - prevTime) / 1000;
 
-    velocity.x -= velocity.x * 10.0 * delta;
-    velocity.z -= velocity.z * 10.0 * delta;
+    velocity.x -= velocity.x * player.getSpeedMultiplier() * delta;
+    velocity.z -= velocity.z * player.getSpeedMultiplier() * delta;
 
-    velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+    velocity.y -= 9.8 * player.getMass() * delta; // 100.0 = mass
 
     direction.z = Number(moveForward) - Number(moveBackward);
     direction.x = Number(moveRight) - Number(moveLeft);
@@ -221,14 +185,14 @@ function animate() {
 
     controls.getObject().position.y += (velocity.y * delta); // new behavior
 
-    if (controls.getObject().position.y < 10) {
+    if (controls.getObject().position.y < player.getHeight()) {
       velocity.y = 0;
-      controls.getObject().position.y = 10;
+      controls.getObject().position.y = player.getHeight();
 
       canJump = true;
     }
   }
   prevTime = time;
 
-  renderer.render(scene, camera);
+  renderer.render(scene.getScene(), player.getPlayer());
 }

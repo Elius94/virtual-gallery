@@ -1,198 +1,309 @@
 import * as THREE from 'three';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
-import "./app.css";
-import Scene from './scene';
-import Floor from './floor';
-import Ceiling from './ceiling';
-import Player from './player';
-import Renderer from './renderer';
-import Walls from './walls';
 
-const room = {
-  width: 2200,
-  height: 400,
-  depth: 1300
+import Stats from 'three/examples/jsm/libs/stats.module.js';
+
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+import { Octree } from 'three/examples/jsm/math/Octree.js';
+import { OctreeHelper } from 'three/examples/jsm/helpers/OctreeHelper.js';
+
+import { Capsule } from 'three/examples/jsm/math/Capsule.js';
+
+import { GUI } from './lil-gui.module.min.js';
+
+const txtLoader = new THREE.TextureLoader();
+const clock = new THREE.Clock();
+
+const scene = new THREE.Scene();
+//scene.background = new THREE.Color(0x88ccee);
+// Put a picture in the background
+//const texture = txtLoader.load('./textures/general/DSC02177-Modifica.jpg');
+// Add spotlights to the scene
+const spotLights = [
+  new THREE.SpotLight(0xffffff, 1, 0, Math.PI / 2, 0.5),
+];
+
+spotLights[0].position.set(10, 10, 0);
+spotLights[0].target.position.set(0, 0, 0);
+spotLights[0].castShadow = true;
+
+scene.add(spotLights[0]);
+
+const texture = txtLoader.load(
+  './textures/general/Giau_2.jpg',
+  () => {
+    const rt = new THREE.WebGLCubeRenderTarget(texture.image.height);
+    rt.fromEquirectangularTexture(renderer, texture);
+    scene.background = rt.texture;
+  });
+
+scene.background = texture;
+scene.fog = new THREE.Fog(0x88ccee, 0, 50);
+
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.rotation.order = 'YXZ';
+
+const fillLight1 = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.2);
+fillLight1.position.set(2, 1, 1);
+scene.add(fillLight1);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(- 5, 25, - 1);
+directionalLight.castShadow = true;
+directionalLight.shadow.camera.near = 0.01;
+directionalLight.shadow.camera.far = 500;
+directionalLight.shadow.camera.right = 30;
+directionalLight.shadow.camera.left = - 30;
+directionalLight.shadow.camera.top = 30;
+directionalLight.shadow.camera.bottom = - 30;
+directionalLight.shadow.mapSize.width = 1024;
+directionalLight.shadow.mapSize.height = 1024;
+directionalLight.shadow.radius = 4;
+directionalLight.shadow.bias = - 0.00006;
+scene.add(directionalLight);
+
+const container = document.getElementById('container') as HTMLElement;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.VSMShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+container.appendChild(renderer.domElement);
+
+const stats = new (Stats as any)();
+stats.domElement.style.position = 'absolute';
+stats.domElement.style.top = '0px';
+container.appendChild(stats.domElement);
+
+const GRAVITY = 30;
+
+const STEPS_PER_FRAME = 5;
+
+const worldOctree = new Octree();
+
+const playerCollider = new Capsule(new THREE.Vector3(0, 0.35, 0), new THREE.Vector3(0, 1, 0), 0.35);
+
+const playerVelocity = new THREE.Vector3();
+const playerDirection = new THREE.Vector3();
+
+let playerOnFloor = false;
+//let mouseTime = 0;
+
+const keyStates = {} as { [key: string]: boolean };
+
+document.addEventListener('keydown', (event) => {
+  keyStates[event.code] = true;
+});
+
+document.addEventListener('keyup', (event) => {
+  keyStates[event.code] = false;
+});
+
+container.addEventListener('mousedown', () => {
+  document.body.requestPointerLock();
+  //mouseTime = performance.now();
+});
+
+document.body.addEventListener('mousemove', (event) => {
+  if (document.pointerLockElement === document.body) {
+    camera.rotation.y -= event.movementX / 500;
+    camera.rotation.x -= event.movementY / 500;
+  }
+});
+
+
+/*const blocker = document.getElementById('blocker') as HTMLElement;
+const instructions = document.getElementById('instructions') as HTMLElement;
+
+instructions.addEventListener('click', function () {
+  
+});
+
+plcontrols.addEventListener('lock', function () {
+  instructions.style.display = 'none';
+  blocker.style.display = 'none';
+});
+
+plcontrols.addEventListener('unlock', function () {
+  blocker.style.display = 'block';
+  instructions.style.display = '';
+});*/
+
+
+window.addEventListener('resize', onWindowResize);
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-let scene: Scene;
-let player: Player;
-let renderer: Renderer;
-let floor: Floor;
-let ceiling: Ceiling;
-let walls: Walls;
+function playerCollisions() {
+  const result = worldOctree.capsuleIntersect(playerCollider);
+  playerOnFloor = false;
 
-const light1 = new THREE.PointLight(0xffffff, 1, 100);
-light1.position.set(-300, 200, 200);
-const light2 = new THREE.PointLight(0xffffff, 1, 100);
-light2.position.set(300, 200, 200);
-const light3 = new THREE.PointLight(0xffffff, 1, 100);
-light3.position.set(-300, 200, -200);
-const light4 = new THREE.PointLight(0xffffff, 1, 100);
-light4.position.set(300, 200, -200);
-
-
-const objects = [] as THREE.Object3D[];
-let controls: PointerLockControls;
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
-let canJump = false;
-let prevTime = performance.now();
-
-let raycaster: THREE.Raycaster;
-
-const velocity = new THREE.Vector3();
-const direction = new THREE.Vector3();
-
-init();
-animate();
-
-function init() {
-  scene = new Scene();
-  player = new Player({ height: 100 });
-  renderer = new Renderer(window.innerWidth, window.innerHeight, window.devicePixelRatio);
-  document.body.appendChild(renderer.getDomElement());
-
-  walls = new Walls(room.depth, room.width, room.height);
-  walls.getWalls().forEach(wall => {
-    scene.add(wall);
-    objects.push(wall);
-  });
-
-  floor = new Floor(room.depth, room.width);
-  scene.add(floor.getFloor());
-
-  ceiling = new Ceiling(room.depth, room.width, room.height);
-  scene.add(ceiling.getCeiling());
-
-  scene.add(light1);
-  scene.add(light2);
-  scene.add(light3);
-  scene.add(light4);
-
-  controls = new PointerLockControls(player.getPlayer(), document.body);
-  const blocker = document.getElementById('blocker') as HTMLElement;
-  const instructions = document.getElementById('instructions') as HTMLElement;
-
-  instructions.addEventListener('click', function () {
-    controls.lock();
-  });
-
-  controls.addEventListener('lock', function () {
-    instructions.style.display = 'none';
-    blocker.style.display = 'none';
-  });
-
-  controls.addEventListener('unlock', function () {
-    blocker.style.display = 'block';
-    instructions.style.display = '';
-  });
-
-  scene.add(controls.getObject());
-
-  const onKeyDown = function (event: KeyboardEvent) {
-    switch (event.code) {
-      case "ArrowUp": // up
-      case "KeyW": // w
-        moveForward = true;
-        break;
-      case "ArrowLeft": // left
-      case "KeyA": // a
-        moveLeft = true;
-        break;
-      case "ArrowDown": // down
-      case "KeyS": // s
-        moveBackward = true;
-        break;
-      case "ArrowRight": // right
-      case "KeyD": // d
-        moveRight = true;
-        break;
-      case 'Space':
-        if (canJump === true) velocity.y += 350;
-        canJump = false;
-        break;
+  if (result) {
+    playerOnFloor = result.normal.y > 0;
+    if (!playerOnFloor) {
+      playerVelocity.addScaledVector(result.normal, - result.normal.dot(playerVelocity));
     }
-  };
 
-  const onKeyUp = function (event: KeyboardEvent) {
-    switch (event.code) {
-      case 'ArrowUp':
-      case 'KeyW':
-        moveForward = false;
-        break;
-      case 'ArrowLeft':
-      case 'KeyA':
-        moveLeft = false;
-        break;
-      case 'ArrowDown':
-      case 'KeyS':
-        moveBackward = false;
-        break;
-      case 'ArrowRight':
-      case 'KeyD':
-        moveRight = false;
-        break;
+    playerCollider.translate(result.normal.multiplyScalar(result.depth));
+  }
+}
+
+function updatePlayer(deltaTime: number) {
+  let damping = Math.exp(- 4 * deltaTime) - 1;
+
+  if (!playerOnFloor) {
+    playerVelocity.y -= GRAVITY * deltaTime;
+    // small air resistance
+    damping *= 0.1;
+  }
+
+  playerVelocity.addScaledVector(playerVelocity, damping);
+
+  const deltaPosition = playerVelocity.clone().multiplyScalar(deltaTime);
+  playerCollider.translate(deltaPosition);
+
+  playerCollisions();
+  camera.position.copy(playerCollider.end);
+}
+
+function getForwardVector() {
+  camera.getWorldDirection(playerDirection);
+  playerDirection.y = 0;
+  playerDirection.normalize();
+  return playerDirection;
+}
+
+function getSideVector() {
+
+  camera.getWorldDirection(playerDirection);
+  playerDirection.y = 0;
+  playerDirection.normalize();
+  playerDirection.cross(camera.up);
+
+  return playerDirection;
+
+}
+
+function controls(deltaTime: number) {
+
+  // gives a bit of air control
+  const speedDelta = deltaTime * (playerOnFloor ? 25 : 8);
+
+  if (keyStates['KeyW']) {
+    playerVelocity.add(getForwardVector().multiplyScalar(speedDelta));
+  }
+
+  if (keyStates['KeyS']) {
+    playerVelocity.add(getForwardVector().multiplyScalar(- speedDelta));
+  }
+
+  if (keyStates['KeyA']) {
+    playerVelocity.add(getSideVector().multiplyScalar(- speedDelta));
+  }
+
+  if (keyStates['KeyD']) {
+    playerVelocity.add(getSideVector().multiplyScalar(speedDelta));
+  }
+
+  if (keyStates['KeyZ']) {
+    spotLights[0].position.x -= 0.1;
+    console.log(spotLights[0].position);
+  }
+
+  if (keyStates['KeyX']) {
+    spotLights[0].position.x += 0.1;
+    console.log(spotLights[0].position);
+  }
+
+  if (keyStates['KeyC']) {
+    spotLights[0].position.y += 0.1;
+    console.log(spotLights[0].position);
+  }
+
+  if (keyStates['KeyV']) {
+    spotLights[0].position.y -= 0.1;
+    console.log(spotLights[0].position);
+  }
+
+  if (keyStates['KeyB']) {
+    spotLights[0].position.z += 0.1;
+    console.log(spotLights[0].position);
+  }
+
+  if (keyStates['KeyN']) {
+    spotLights[0].position.z -= 0.1;
+    console.log(spotLights[0].position);
+  }
+
+  if (playerOnFloor) {
+    if (keyStates['Space']) {
+      playerVelocity.y = 10;
     }
-  };
+  }
+}
 
-  raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, - 1, 0), 0, 10);
-  document.addEventListener('keydown', onKeyDown, false);
-  document.addEventListener('keyup', onKeyUp, false);
+const loader = new GLTFLoader().setPath('./models/gltf/');
 
-  const onWindowResize = function () {
-    player.resize(window.innerWidth, window.innerHeight);
-    renderer.resize(window.innerWidth, window.innerHeight);
-  };
+// load a room model
+// Room model 1
+loader.load('vr_staircase_art_gallery_2018.glb', (gltf: GLTF) => {
+  const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+  scene.add(gltf.scene);
+  worldOctree.fromGraphNode(gltf.scene);
 
-  window.addEventListener('resize', onWindowResize, false);
+  gltf.scene.traverse((child: any) => {
+    if (child.isMesh && child.material.map !== null) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+      if (child.material.map) {
+        child.material.map.anisotropy = maxAnisotropy;
+        child.material.map.encoding = THREE.sRGBEncoding;
+
+      }
+    }
+  });
+
+  const helper = new OctreeHelper(worldOctree, 0x00ff00);
+  helper.visible = false;
+  scene.add(helper);
+
+  /* @ts-ignore */
+  const gui = new GUI({ width: 200 }) as any;
+  gui.add({ debug: false }, 'debug')
+    .onChange(function (value: boolean) {
+      helper.visible = value;
+    });
+
+  animate();
+});
+
+function teleportPlayerIfOob() {
+  if (camera.position.y <= - 25) {
+    playerCollider.start.set(0, 0.35, 0);
+    playerCollider.end.set(0, 1, 0);
+    playerCollider.radius = 0.35;
+    camera.position.copy(playerCollider.end);
+    camera.rotation.set(0, 0, 0);
+  }
 }
 
 function animate() {
-  requestAnimationFrame(animate);
-
-  const time = performance.now();
-
-  if (controls.isLocked === true) {
-    raycaster.ray.origin.copy(controls.getObject().position);
-    raycaster.ray.origin.y -= 10;
-
-    
-    const intersections = raycaster.intersectObjects(objects, false);
-    const onObject = intersections.length > 0;
-    const delta = (time - prevTime) / 1000;
-
-    velocity.x -= velocity.x * player.getSpeedMultiplier() * delta;
-    velocity.z -= velocity.z * player.getSpeedMultiplier() * delta;
-
-    velocity.y -= 9.8 * player.getMass() * delta; // 100.0 = mass
-
-    direction.z = Number(moveForward) - Number(moveBackward);
-    direction.x = Number(moveRight) - Number(moveLeft);
-    direction.normalize(); // this ensures consistent movements in all directions
-
-    if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
-    if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
-
-    if (onObject === true) {
-      velocity.y = Math.max(0, velocity.y);
-      canJump = true;
-    }
-
-    controls.moveRight(- velocity.x * delta);
-    controls.moveForward(- velocity.z * delta);
-
-    controls.getObject().position.y += (velocity.y * delta); // new behavior
-
-    if (controls.getObject().position.y < player.getHeight()) {
-      velocity.y = 0;
-      controls.getObject().position.y = player.getHeight();
-
-      canJump = true;
-    }
+  const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME;
+  // we look for collisions in substeps to mitigate the risk of
+  // an object traversing another too quickly for detection.
+  for (let i = 0; i < STEPS_PER_FRAME; i++) {
+    controls(deltaTime);
+    updatePlayer(deltaTime);
+    teleportPlayerIfOob();
   }
-  prevTime = time;
 
-  renderer.render(scene.getScene(), player.getPlayer());
+  renderer.render(scene, camera);
+  stats.update();
+  requestAnimationFrame(animate);
 }

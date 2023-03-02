@@ -60,6 +60,8 @@ const buildOptions = {
                     }
                     // copy src/textures to public/textures if exists (the whole folder, recursively)
                     fs.cpSync("src/textures", "public/textures", { recursive: true })
+                    fs.cpSync("src/models", "public/models", { recursive: true })
+
                     console.log("\u001b[36mAssets copied!\u001b[37m")
                 })
             }

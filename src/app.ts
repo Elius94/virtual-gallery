@@ -11,6 +11,8 @@ import { Capsule } from 'three/examples/jsm/math/Capsule.js';
 
 import { GUI } from './lil-gui.module.min.js';
 
+import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
+
 const txtLoader = new THREE.TextureLoader();
 const clock = new THREE.Clock();
 
@@ -19,7 +21,7 @@ const scene = new THREE.Scene();
 // Put a picture in the background
 //const texture = txtLoader.load('./textures/general/DSC02177-Modifica.jpg');
 // Add spotlights to the scene
-const spotLights = [
+/*const spotLights = [
   new THREE.SpotLight(0xffffff, 1, 0, Math.PI / 2, 0.5),
 ];
 
@@ -27,7 +29,7 @@ spotLights[0].position.set(10, 10, 0);
 spotLights[0].target.position.set(0, 0, 0);
 spotLights[0].castShadow = true;
 
-scene.add(spotLights[0]);
+scene.add(spotLights[0]);*/
 
 const texture = txtLoader.load(
   './textures/general/Giau_2.jpg',
@@ -62,7 +64,7 @@ directionalLight.shadow.radius = 4;
 directionalLight.shadow.bias = - 0.00006;
 scene.add(directionalLight);
 
-const container = document.getElementById('container') as HTMLElement;
+//const container = document.getElementById('container') as HTMLElement;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, });
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -71,12 +73,12 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-container.appendChild(renderer.domElement);
+document.body.appendChild(renderer.domElement);
 
 const stats = new (Stats as any)();
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.top = '0px';
-container.appendChild(stats.domElement);
+document.body.appendChild(stats.domElement);
 
 const GRAVITY = 30;
 
@@ -102,7 +104,7 @@ document.addEventListener('keyup', (event) => {
   keyStates[event.code] = false;
 });
 
-container.addEventListener('mousedown', () => {
+document.body.addEventListener('mousedown', () => {
   document.body.requestPointerLock();
   //mouseTime = performance.now();
 });
@@ -115,23 +117,30 @@ document.body.addEventListener('mousemove', (event) => {
 });
 
 
-/*const blocker = document.getElementById('blocker') as HTMLElement;
+const blocker = document.getElementById('blocker') as HTMLElement;
 const instructions = document.getElementById('instructions') as HTMLElement;
 
 instructions.addEventListener('click', function () {
-  
+  hideInstructions();
 });
 
-plcontrols.addEventListener('lock', function () {
+function hideInstructions() {
   instructions.style.display = 'none';
   blocker.style.display = 'none';
-});
+}
 
-plcontrols.addEventListener('unlock', function () {
+function showInstructions() {
   blocker.style.display = 'block';
   instructions.style.display = '';
-});*/
+}
 
+document.addEventListener("pointerlockchange", () => {
+  if (document.pointerLockElement !== document.body) {
+    showInstructions();
+  } else {
+    hideInstructions();
+  }
+});
 
 window.addEventListener('resize', onWindowResize);
 function onWindowResize() {
@@ -211,36 +220,6 @@ function controls(deltaTime: number) {
     playerVelocity.add(getSideVector().multiplyScalar(speedDelta));
   }
 
-  if (keyStates['KeyZ']) {
-    spotLights[0].position.x -= 0.1;
-    console.log(spotLights[0].position);
-  }
-
-  if (keyStates['KeyX']) {
-    spotLights[0].position.x += 0.1;
-    console.log(spotLights[0].position);
-  }
-
-  if (keyStates['KeyC']) {
-    spotLights[0].position.y += 0.1;
-    console.log(spotLights[0].position);
-  }
-
-  if (keyStates['KeyV']) {
-    spotLights[0].position.y -= 0.1;
-    console.log(spotLights[0].position);
-  }
-
-  if (keyStates['KeyB']) {
-    spotLights[0].position.z += 0.1;
-    console.log(spotLights[0].position);
-  }
-
-  if (keyStates['KeyN']) {
-    spotLights[0].position.z -= 0.1;
-    console.log(spotLights[0].position);
-  }
-
   if (playerOnFloor) {
     if (keyStates['Space']) {
       playerVelocity.y = 10;
@@ -252,8 +231,9 @@ const loader = new GLTFLoader().setPath('./models/gltf/');
 
 // load a room model
 // Room model 1
-loader.load('vr_staircase_art_gallery_2018.glb', (gltf: GLTF) => {
+loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+  gltf.scene.scale.set(0.05, 0.05, 0.05);
   scene.add(gltf.scene);
   worldOctree.fromGraphNode(gltf.scene);
 
@@ -279,6 +259,24 @@ loader.load('vr_staircase_art_gallery_2018.glb', (gltf: GLTF) => {
     .onChange(function (value: boolean) {
       helper.visible = value;
     });
+
+  const picture1 = {
+    picture: './textures/artworks/DSC09167.jpg',
+    size: 3,
+    x: -2.06,
+    y: 1.5,
+    z: 2,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  const p1 = new ArtworkFrame(picture1);
+
+  // expose Picture 1 to the console
+  /* @ts-ignore */
+  window.picture1 = p1;
 
   animate();
 });

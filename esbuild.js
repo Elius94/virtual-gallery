@@ -79,7 +79,7 @@ if (dev) {
     // Enable serve mode
     await ctx.serve({
         servedir: "public",
-        port: 8081,
+        port: 8085,
         onRequest: (args) => {
             if (args.path === "/") {
                 args.path = "/index.html"

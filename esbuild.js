@@ -4,11 +4,17 @@ import { execSync } from "child_process"
 import { build, context } from "esbuild"
 import fs from "fs"
 import figlet from "figlet"
+import Compress from "compress-images"
+
+const INPUT_IMAGE_PATH = "src/textures/**/*.{jpg,JPG,jpeg,JPEG,png,svg,gif}"
+const OUTPUT_IMAGE_PATH = "public/textures/"
 
 const pkg = JSON.parse(fs.readFileSync("./package.json"))
 
 const watch = process.argv.includes("--watch")
 const dev = process.argv.includes("--dev") || process.env.NODE_ENV === "development"
+
+let firstBuild = true
 
 const banner = "/* eslint-disable linebreak-style */\n" +
     "/*\n" +
@@ -32,6 +38,13 @@ const buildOptions = {
     target: ['chrome58', 'firefox57', 'safari11', 'edge18'],
     banner: {
         js: banner
+    },
+    loader: {
+        ".png": "dataurl",
+        ".jpg": "dataurl",
+        ".jpeg": "dataurl",
+        ".gif": "dataurl",
+        ".svg": "dataurl",
     },
     plugins: [
         {
@@ -58,9 +71,31 @@ const buildOptions = {
                         console.log("\u001b[31mESM Build failed!\u001b[37m")
                         process.exit(1)
                     }
-                    // copy src/textures to public/textures if exists (the whole folder, recursively)
-                    fs.cpSync("src/textures", "public/textures", { recursive: true })
+                    if (!firstBuild) {
+                        return
+                    }
+                    firstBuild = false
+                    Compress(INPUT_IMAGE_PATH, OUTPUT_IMAGE_PATH, {
+                        compress_force: false,
+                        statistic: true,
+                        autoupdate: true,
+                        
+                    }, false,
+                        { jpg: { engine: "mozjpeg", command: ["-quality", "60"] } },
+                        { png: { engine: "false", command: false } },
+                        { svg: { engine: "false", command: false } },
+                        { gif: { engine: "false", command: false } },
+                        function (error, completed, statistic) {
+                            console.log("-------------");
+                            console.log(error);
+                            console.log(completed);
+                            console.log(statistic);
+                            console.log("-------------");
+                        }
+                    )
                     fs.cpSync("src/models", "public/models", { recursive: true })
+                    // copy src/textures to public/textures if exists (the whole folder, recursively)
+                    //fs.cpSync("src/textures", "public/textures", { recursive: true })
 
                     console.log("\u001b[36mAssets copied!\u001b[37m")
                 })
@@ -79,7 +114,7 @@ if (dev) {
     // Enable serve mode
     await ctx.serve({
         servedir: "public",
-        port: 8085,
+        port: 8080,
         onRequest: (args) => {
             if (args.path === "/") {
                 args.path = "/index.html"

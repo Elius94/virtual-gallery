@@ -29,7 +29,9 @@ class ArtworkFrame {
         // Create a new texture from the picture
         new THREE.TextureLoader().loadAsync(picture).then((texture) => {
             // Create a material using the texture
-            const material = new THREE.MeshBasicMaterial({ map: texture });
+            texture.anisotropy = 16;
+            texture.encoding = THREE.sRGBEncoding;
+            const material = new THREE.MeshBasicMaterial({ map: texture, });
 
             // Calculate the aspect ratio of the texture
             const aspectRatio = texture.image.width / texture.image.height;

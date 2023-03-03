@@ -10,18 +10,26 @@ import { OctreeHelper } from 'three/examples/jsm/helpers/OctreeHelper.js';
 
 import { Capsule } from 'three/examples/jsm/math/Capsule.js';
 
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
+
 import { GUI } from './lil-gui.module.min.js';
 
+import TouchControls from './touch-controller/TouchControls.js'
 import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
+import "./app.css"
+import "./touch-pad.css"
 
 const txtLoader = new THREE.TextureLoader();
 const clock = new THREE.Clock();
-
 const scene = new THREE.Scene();
-
 const pictures: ArtworkFrame[] = [];
 
-import "./app.css"
+/* @ts-ignore */
+THREE.ColorManagement.enabled = true;
+
 //scene.background = new THREE.Color(0x88ccee);
 // Put a picture in the background
 //const texture = txtLoader.load('./textures/general/DSC02177-Modifica.jpg');
@@ -45,7 +53,7 @@ const texture = txtLoader.load(
   });
 
 scene.background = texture;
-scene.fog = new THREE.Fog(0x88ccee, 0, 50);
+scene.fog = new THREE.Fog(0x88ccee, 0, 150);
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.rotation.order = 'YXZ';
@@ -71,14 +79,33 @@ scene.add(directionalLight);
 
 //const container = document.getElementById('container') as HTMLElement;
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
-renderer.outputEncoding = THREE.sRGBEncoding;
+//renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.8;
+/* @ts-ignore */
+//renderer.gammaFactor = 2.0;
 document.body.appendChild(renderer.domElement);
+
+/* @ts-ignore */
+const target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
+  minFilter: THREE.LinearFilter,
+  magFilter: THREE.LinearFilter,
+  format: THREE.RGBAFormat,
+  encoding: THREE.sRGBEncoding,
+	type: THREE.FloatType
+});
+
+const composer = new EffectComposer(renderer, target);
+composer.setPixelRatio(window.devicePixelRatio);
+composer.setSize(window.innerWidth, window.innerHeight)
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new ShaderPass(GammaCorrectionShader));
+
 
 const stats = new (Stats as any)();
 stats.domElement.style.position = 'absolute';
@@ -152,6 +179,7 @@ function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function playerCollisions() {
@@ -232,6 +260,21 @@ function controls(deltaTime: number) {
   }
 }
 
+const padElement = document.getElementById('container3d') as HTMLDivElement
+new TouchControls(padElement.parentNode) as any
+
+padElement.addEventListener('YawPitch', (event: any) => {
+  console.log(event)
+  camera.rotation.y -= event.deltaY / 500;
+  camera.rotation.x -= event.deltaX / 500;
+})
+
+padElement.addEventListener('move', (event: any) => {
+  console.log(event)
+})
+
+
+
 let mixer: THREE.AnimationMixer
 const loader = new GLTFLoader().setPath('./models/gltf/');
 const fbxLoader = new FBXLoader()
@@ -282,41 +325,51 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
   // Add plants to the scene
   const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
 
-  let startZ = - 4;
-  let x = 0;
-  for (let i = 0; i < 4; i++) {
-    for (let j = 0; j < 2; j++) {
-      if (j === 0) {
-        x = - 3;
-      } else {
-        x = -13
+
+  loadModel(plant3).then((gltf: any) => {
+    gltf.scene.scale.set(2, 2, 2);
+    gltf.scene.position.set(3, 0, 4);
+    gltf.scene.rotation.set(0, 0, 0);
+
+    mixer = new THREE.AnimationMixer(gltf.scene)
+    const action = mixer.clipAction((gltf as any).animations[0]);
+    action.play();
+
+    gltf.scene.traverse((child: any) => {
+      if (child.isMesh && child.material.map !== null) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        if (child.material.map) {
+          child.material.map.anisotropy = maxAnisotropy;
+          child.material.map.encoding = THREE.sRGBEncoding;
+
+        }
       }
-      loadModel(plant3).then((gltf: any) => {
-        gltf.scene.scale.set(2, 2, 2);
-        gltf.scene.position.set(x, 0, startZ);
-        gltf.scene.rotation.set(0, 0, 0);
+    });
+    scene.add(gltf.scene);
+  })
+  loadModel(plant3).then((gltf: any) => {
+    gltf.scene.scale.set(2, 2, 2);
+    gltf.scene.position.set(-13, 0, 4);
+    gltf.scene.rotation.set(0, 0, 0);
 
-        mixer = new THREE.AnimationMixer(gltf.scene)
-        const action = mixer.clipAction((gltf as any).animations[0]);
-        action.play();
+    mixer = new THREE.AnimationMixer(gltf.scene)
+    const action = mixer.clipAction((gltf as any).animations[0]);
+    action.play();
 
-        gltf.scene.traverse((child: any) => {
-          if (child.isMesh && child.material.map !== null) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-            if (child.material.map) {
-              child.material.map.anisotropy = maxAnisotropy;
-              child.material.map.encoding = THREE.sRGBEncoding;
+    gltf.scene.traverse((child: any) => {
+      if (child.isMesh && child.material.map !== null) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        if (child.material.map) {
+          child.material.map.anisotropy = maxAnisotropy;
+          child.material.map.encoding = THREE.sRGBEncoding;
 
-            }
-          }
-        });
-        scene.add(gltf.scene);
-      })
-
-    }
-    startZ += 3;
-  }
+        }
+      }
+    });
+    scene.add(gltf.scene);
+  })
 
   const picture1 = {
     picture: './textures/artworks/DSC09167.jpg',
@@ -477,7 +530,7 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
   pictures.push(new ArtworkFrame(picture11));
 
   const picture12 = {
-    picture: './textures/artworks/20220521-DSC08787.jpg',
+    picture: './textures/artworks/20220521-DSC08787-2.jpg',
     size: 1.5,
     x: -2.58,
     y: 1.5,
@@ -648,6 +701,7 @@ function animate() {
   }
 
   renderer.render(scene, camera);
+  composer.render();
   stats.update();
   requestAnimationFrame(animate);
 }

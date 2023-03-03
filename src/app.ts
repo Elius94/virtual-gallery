@@ -286,33 +286,33 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
   let x = 0;
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 2; j++) {
-    if (j === 0) {
-      x = - 3;
-    } else {
-      x = -13
-    }
-    loadModel(plant3).then((gltf: any) => {
-      gltf.scene.scale.set(2, 2, 2);
-      gltf.scene.position.set(x, 0, startZ);
-      gltf.scene.rotation.set(0, 0, 0);
+      if (j === 0) {
+        x = - 3;
+      } else {
+        x = -13
+      }
+      loadModel(plant3).then((gltf: any) => {
+        gltf.scene.scale.set(2, 2, 2);
+        gltf.scene.position.set(x, 0, startZ);
+        gltf.scene.rotation.set(0, 0, 0);
 
-      mixer = new THREE.AnimationMixer(gltf.scene)
-      const action = mixer.clipAction((gltf as any).animations[0]);
-      action.play();
+        mixer = new THREE.AnimationMixer(gltf.scene)
+        const action = mixer.clipAction((gltf as any).animations[0]);
+        action.play();
 
-      gltf.scene.traverse((child: any) => {
-        if (child.isMesh && child.material.map !== null) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-          if (child.material.map) {
-            child.material.map.anisotropy = maxAnisotropy;
-            child.material.map.encoding = THREE.sRGBEncoding;
+        gltf.scene.traverse((child: any) => {
+          if (child.isMesh && child.material.map !== null) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            if (child.material.map) {
+              child.material.map.anisotropy = maxAnisotropy;
+              child.material.map.encoding = THREE.sRGBEncoding;
 
+            }
           }
-        }
-      });
-      scene.add(gltf.scene);
-    })
+        });
+        scene.add(gltf.scene);
+      })
 
     }
     startZ += 3;

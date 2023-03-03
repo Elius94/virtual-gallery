@@ -278,11 +278,11 @@ padElement.addEventListener('move', (event: any) => {
   const speedDelta = 0.01 * (playerOnFloor ? 12 : 4);
 
   if (y > 0) {
-    playerVelocity.add(getForwardVector().multiplyScalar(- speedDelta));
+    playerVelocity.add(getForwardVector().multiplyScalar(speedDelta));
   }
 
   if (y < 0) {
-    playerVelocity.add(getForwardVector().multiplyScalar(speedDelta));
+    playerVelocity.add(getForwardVector().multiplyScalar(- speedDelta));
   }
 
   if (x < 0) {

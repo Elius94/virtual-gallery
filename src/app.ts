@@ -265,8 +265,8 @@ new TouchControls(padElement) as any
 
 padElement.addEventListener('YawPitch', (event: any) => {
   //console.log(event)
-  camera.rotation.y -= event.details.deltaY / 500;
-  camera.rotation.x -= event.details.deltaX / 500;
+  camera.rotation.y -= event.detail.deltaY / 500;
+  camera.rotation.x -= event.detail.deltaX / 500;
 })
 
 padElement.addEventListener('move', (event: any) => {

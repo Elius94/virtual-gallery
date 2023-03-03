@@ -271,26 +271,26 @@ padElement.addEventListener('YawPitch', (event: any) => {
 
 padElement.addEventListener('move', (event: any) => {
   //console.log(event)
-  const y = event.detail.deltaX
-  const x = event.detail.deltaY
+  const x = event.detail.deltaX
+  const y = event.detail.deltaY
 
 
   const speedDelta = 0.01 * (playerOnFloor ? 12 : 4);
 
   if (y > 0) {
-    playerVelocity.add(getForwardVector().multiplyScalar(speedDelta));
-  }
-
-  if (y < 0) {
     playerVelocity.add(getForwardVector().multiplyScalar(- speedDelta));
   }
 
+  if (y < 0) {
+    playerVelocity.add(getForwardVector().multiplyScalar(speedDelta));
+  }
+
   if (x < 0) {
-    playerVelocity.add(getSideVector().multiplyScalar(- speedDelta));
+    playerVelocity.add(getSideVector().multiplyScalar(speedDelta));
   }
 
   if (x > 0) {
-    playerVelocity.add(getSideVector().multiplyScalar(speedDelta));
+    playerVelocity.add(getSideVector().multiplyScalar(- speedDelta));
   }
 })
 

@@ -283,13 +283,16 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
   const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
 
   let startZ = - 4;
-  for (let i = 0; i < 8; i++) {
-    let x = 3;
-    if (i % 2 === 0) {
-      x = -12;
+  let x = 0;
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 2; j++) {
+    if (j === 0) {
+      x = - 3;
+    } else {
+      x = -13
     }
     loadModel(plant3).then((gltf: any) => {
-      gltf.scene.scale.set(1, 1, 1);
+      gltf.scene.scale.set(2, 2, 2);
       gltf.scene.position.set(x, 0, startZ);
       gltf.scene.rotation.set(0, 0, 0);
 
@@ -308,10 +311,11 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
           }
         }
       });
-
       scene.add(gltf.scene);
-      startZ += 4;
     })
+
+    }
+    startZ += 3;
   }
 
   const picture1 = {

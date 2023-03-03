@@ -78,6 +78,25 @@ class ArtworkFrame {
         this.geometry.scale(0.9, 0.9, 1);
         this.mesh.geometry = this.geometry;
     }
+
+    getSize() {
+        return this.geometry.parameters.width;
+    }
+
+    getPosition() {
+        return this.mesh.position;
+    }
+
+    getRotation() {
+        return this.mesh.rotation;
+    }
+
+    increasePosition(x: number, y: number, z: number) {
+        this.mesh.position.x += x;
+        this.mesh.position.y += y;
+        this.mesh.position.z += z;
+        return this.getPosition();
+    }
 }
 
 export default ArtworkFrame;

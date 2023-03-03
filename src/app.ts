@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 
 import { Octree } from 'three/examples/jsm/math/Octree.js';
 import { OctreeHelper } from 'three/examples/jsm/helpers/OctreeHelper.js';
@@ -17,6 +18,8 @@ const txtLoader = new THREE.TextureLoader();
 const clock = new THREE.Clock();
 
 const scene = new THREE.Scene();
+
+const pictures: ArtworkFrame[] = [];
 
 import "./app.css"
 //scene.background = new THREE.Color(0x88ccee);
@@ -229,7 +232,21 @@ function controls(deltaTime: number) {
   }
 }
 
+let mixer: THREE.AnimationMixer
 const loader = new GLTFLoader().setPath('./models/gltf/');
+const fbxLoader = new FBXLoader()
+fbxLoader.setPath('./models/fbx/')
+
+function loadModel(url: string) {
+  return new Promise((resolve, reject) => {
+    loader.load(url, (gltf) => {
+      resolve(gltf)
+    }, undefined, (error) => {
+      reject(error)
+    })
+  })
+}
+
 
 // load a room model
 // Room model 1
@@ -262,26 +279,345 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
       helper.visible = value;
     });
 
+  // Add plants to the scene
+  const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
+
+  let startZ = - 4;
+  for (let i = 0; i < 4; i++) {
+    loadModel(plant3).then((gltf: any) => {
+      gltf.scene.scale.set(0.5, Math.random() * 0.5 + 0.5, 0.5);
+      gltf.scene.position.set(2, 0, startZ);
+      gltf.scene.rotation.set(0, 0, 0);
+
+      mixer = new THREE.AnimationMixer(gltf.scene)
+      const action = mixer.clipAction((gltf as any).animations[0]);
+      action.play();
+
+      gltf.scene.traverse((child: any) => {
+        if (child.isMesh && child.material.map !== null) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          if (child.material.map) {
+            child.material.map.anisotropy = maxAnisotropy;
+            child.material.map.encoding = THREE.sRGBEncoding;
+
+          }
+        }
+      });
+
+      scene.add(gltf.scene);
+      startZ += 2;
+    })
+  }
+
   const picture1 = {
     picture: './textures/artworks/DSC09167.jpg',
     size: 3,
     x: -2.06,
     y: 1.5,
-    z: 2,
+    z: 1.55,
     rotationX: 0,
     rotationY: 1.58,
     rotationZ: 0,
     thickness: 0.1,
     scene: scene,
   } as ArtworkFrameOptions;
-  const p1 = new ArtworkFrame(picture1);
+  pictures.push(new ArtworkFrame(picture1));
+
+  const picture2 = {
+    picture: './textures/artworks/20230129-DSC09047.jpg',
+    size: 3,
+    x: -2.06,
+    y: 1.5,
+    z: 4.6,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture2));
+
+  const picture3 = {
+    picture: './textures/artworks/20230129-DSC09046-Pano.jpg',
+    size: 2.7,
+    x: -2.06,
+    y: 1.5,
+    z: 7.5,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture3));
+
+  const picture4 = {
+    picture: './textures/artworks/20200912-EL_05659.jpg',
+    size: 3.1,
+    x: -2.06,
+    y: 1.5,
+    z: 10.5,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture4));
+  /* FIRST WALL - OUTSIDE */
+
+
+  const picture5 = {
+    picture: './textures/artworks/20230129-DSC08872.jpg',
+    size: 3.1,
+    x: 1.75,
+    y: 1.5,
+    z: 17.2,
+    rotationX: 0,
+    rotationY: 3.15,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture5));
+
+  const picture6 = {
+    picture: './textures/artworks/20230129-DSC08944.jpg',
+    size: 1.5,
+    x: -1.15,
+    y: 1.5,
+    z: 16.3,
+    rotationX: 0,
+    rotationY: 3.15,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture6));
+
+  const picture7 = {
+    picture: './textures/artworks/20230121-DSC08641.jpg',
+    size: 3,
+    x: 1.75,
+    y: 1.5,
+    z: -5.2,
+    rotationX: 0,
+    rotationY: 3.15,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture7));
+
+  const picture8 = {
+    picture: './textures/artworks/20221008-DSC00675-Edit.jpg',
+    size: 1.5,
+    x: -1.15,
+    y: 1.5,
+    z: -4.31,
+    rotationX: 0,
+    rotationY: 3.15,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture8));
+
+  /* FIRST_AREA: EDGES */
+
+  const picture9 = {
+    picture: './textures/artworks/20220702-DSC09633-Pano.jpg',
+    size: 1.5,
+    x: -2.58,
+    y: 1.5,
+    z: 1.55,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture9));
+
+  const picture10 = {
+    picture: './textures/artworks/20221218-DSC01894.jpg',
+    size: 3,
+    x: -2.58,
+    y: 1.5,
+    z: 4.6,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture10));
+
+  const picture11 = {
+    picture: './textures/artworks/20220521-DSC08782.jpg',
+    size: 3,
+    x: -2.58,
+    y: 1.5,
+    z: 7.5,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture11));
+
+  const picture12 = {
+    picture: './textures/artworks/20220521-DSC08787.jpg',
+    size: 1.5,
+    x: -2.58,
+    y: 1.5,
+    z: 10.5,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture12));
+  /* FIRST WALL - INSIDE */
+
+  const picture13 = {
+    picture: './textures/artworks/20211218-EL_07597.jpg',
+    size: 3,
+    x: -7.04,
+    y: 1.5,
+    z: 1.55,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture13));
+
+  const picture14 = {
+    picture: './textures/artworks/20211218-EL_07606.jpg',
+    size: 3,
+    x: -7.04,
+    y: 1.5,
+    z: 4.6,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture14));
+
+  const picture15 = {
+    picture: './textures/artworks/20221231-DSC02631.jpg',
+    size: 3,
+    x: -7.04,
+    y: 1.5,
+    z: 7.5,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture15));
+
+  const picture16 = {
+    picture: './textures/artworks/20221004-DSC00619.jpg',
+    size: 3,
+    x: -7.04,
+    y: 1.5,
+    z: 10.5,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture16));
+  /* SECOND WALL - INSIDE */
+
+  const picture17 = {
+    picture: './textures/artworks/20200612-EL_04301-Pano.jpg',
+    size: 4,
+    x: -5,
+    y: 1.5,
+    z: -5.2,
+    rotationX: 0,
+    rotationY: 3.15,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture17));
+
+  const picture19 = {
+    picture: './textures/artworks/20200807-EL_04791.jpg',
+    size: 1.6,
+    x: -7.58,
+    y: 1.5,
+    z: 1.55,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture19));
+
+  const picture20 = {
+    picture: './textures/artworks/20200812-EL_05265.jpg',
+    size: 3,
+    x: -7.58,
+    y: 1.5,
+    z: 4.3,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture20));
+
+  const picture21 = {
+    picture: './textures/artworks/20180818-EL_03465.jpg',
+    size: 3,
+    x: -7.58,
+    y: 1.5,
+    z: 7.7,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture21));
+
+  const picture22 = {
+    picture: './textures/artworks/20180817-EL_02957.jpg',
+    size: 2,
+    x: -7.58,
+    y: 1.5,
+    z: 10.5,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  pictures.push(new ArtworkFrame(picture22));
+  /* SECOND WALL - OUTSIDE */
 
   // expose Picture 1 to the console
   /* @ts-ignore */
-  window.picture1 = p1;
+  window.pictures = pictures;
 
   animate();
 });
+
 
 function teleportPlayerIfOob() {
   if (camera.position.y <= - 25) {

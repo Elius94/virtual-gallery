@@ -265,12 +265,33 @@ new TouchControls(padElement) as any
 
 padElement.addEventListener('YawPitch', (event: any) => {
   //console.log(event)
-  camera.rotation.y -= event.detail.deltaY / 500;
-  camera.rotation.x -= event.detail.deltaX / 500;
+  camera.rotation.x -= event.detail.deltaY / 500;
+  camera.rotation.y -= event.detail.deltaX / 500;
 })
 
 padElement.addEventListener('move', (event: any) => {
-  console.log(event)
+  //console.log(event)
+  const y = event.detail.deltaX
+  const x = event.detail.deltaY
+
+
+  const speedDelta = 0.01 * (playerOnFloor ? 12 : 4);
+
+  if (y > 0) {
+    playerVelocity.add(getForwardVector().multiplyScalar(speedDelta));
+  }
+
+  if (y < 0) {
+    playerVelocity.add(getForwardVector().multiplyScalar(- speedDelta));
+  }
+
+  if (x < 0) {
+    playerVelocity.add(getSideVector().multiplyScalar(- speedDelta));
+  }
+
+  if (x > 0) {
+    playerVelocity.add(getSideVector().multiplyScalar(speedDelta));
+  }
 })
 
 

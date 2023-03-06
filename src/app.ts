@@ -18,7 +18,7 @@ import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectio
 import { GUI } from './lil-gui.module.min.js';
 
 import TouchControls from './touch-controller/TouchControls.js'
-import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
+import ArtworkFrame/*, { ArtworkFrameOptions }*/ from './Artwork.js';
 import "./app.css"
 import "./touch-pad.css"
 
@@ -97,7 +97,7 @@ const target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight
   magFilter: THREE.LinearFilter,
   format: THREE.RGBAFormat,
   encoding: THREE.sRGBEncoding,
-	type: THREE.FloatType
+  type: THREE.FloatType
 });
 
 const composer = new EffectComposer(renderer, target);
@@ -233,7 +233,6 @@ function getSideVector() {
 }
 
 function controls(deltaTime: number) {
-
   // gives a bit of air control
   const speedDelta = deltaTime * (playerOnFloor ? 25 : 8);
 
@@ -260,41 +259,44 @@ function controls(deltaTime: number) {
   }
 }
 
-const padElement = document.getElementById('container3d') as HTMLDivElement
-new TouchControls(padElement) as any
+// Check if we are running in a mobile device
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-padElement.addEventListener('YawPitch', (event: any) => {
-  //console.log(event)
-  camera.rotation.x -= event.detail.deltaY / 500;
-  camera.rotation.y -= event.detail.deltaX / 500;
-})
+if (isMobile) {
+  const padElement = document.getElementById('container3d') as HTMLDivElement
+  new TouchControls(padElement) as any
 
-padElement.addEventListener('move', (event: any) => {
-  //console.log(event)
-  const x = event.detail.deltaX
-  const y = event.detail.deltaY
+  padElement.addEventListener('YawPitch', (event: any) => {
+    //console.log(event)
+    camera.rotation.x -= event.detail.deltaY / 400;
+    camera.rotation.y -= event.detail.deltaX / 400;
+  })
 
-
-  const speedDelta = 0.01 * (playerOnFloor ? 12 : 4);
-
-  if (y > 0) {
-    playerVelocity.add(getForwardVector().multiplyScalar(speedDelta));
-  }
-
-  if (y < 0) {
-    playerVelocity.add(getForwardVector().multiplyScalar(- speedDelta));
-  }
-
-  if (x < 0) {
-    playerVelocity.add(getSideVector().multiplyScalar(speedDelta));
-  }
-
-  if (x > 0) {
-    playerVelocity.add(getSideVector().multiplyScalar(- speedDelta));
-  }
-})
+  padElement.addEventListener('move', (event: any) => {
+    //console.log(event)
+    const x = event.detail.deltaX
+    const y = event.detail.deltaY
 
 
+    const speedDelta = 0.01 * (playerOnFloor ? 12 : 4);
+
+    if (y > 0) {
+      playerVelocity.add(getForwardVector().multiplyScalar(y * speedDelta));
+    }
+
+    if (y < 0) {
+      playerVelocity.add(getForwardVector().multiplyScalar(- (y * speedDelta)));
+    }
+
+    if (x < 0) {
+      playerVelocity.add(getSideVector().multiplyScalar(x * speedDelta));
+    }
+
+    if (x > 0) {
+      playerVelocity.add(getSideVector().multiplyScalar(- (x * speedDelta)));
+    }
+  })
+}
 
 let mixer: THREE.AnimationMixer
 const loader = new GLTFLoader().setPath('./models/gltf/');
@@ -392,7 +394,7 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
     scene.add(gltf.scene);
   })
 
-  const picture1 = {
+  /*const picture1 = {
     picture: './textures/artworks/DSC09167.jpg',
     size: 3,
     x: -2.06,
@@ -447,7 +449,7 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
     scene: scene,
   } as ArtworkFrameOptions;
   pictures.push(new ArtworkFrame(picture4));
-  /* FIRST WALL - OUTSIDE */
+  // FIRST WALL - OUTSIDE
 
 
   const picture5 = {
@@ -506,7 +508,7 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
   } as ArtworkFrameOptions;
   pictures.push(new ArtworkFrame(picture8));
 
-  /* FIRST_AREA: EDGES */
+  // FIRST_AREA: EDGES 
 
   const picture9 = {
     picture: './textures/artworks/20220702-DSC09633-Pano.jpg',
@@ -563,7 +565,7 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
     scene: scene,
   } as ArtworkFrameOptions;
   pictures.push(new ArtworkFrame(picture12));
-  /* FIRST WALL - INSIDE */
+  // FIRST WALL - INSIDE
 
   const picture13 = {
     picture: './textures/artworks/20211218-EL_07597.jpg',
@@ -620,7 +622,7 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
     scene: scene,
   } as ArtworkFrameOptions;
   pictures.push(new ArtworkFrame(picture16));
-  /* SECOND WALL - INSIDE */
+  // SECOND WALL - INSIDE 
 
   const picture17 = {
     picture: './textures/artworks/20200612-EL_04301-Pano.jpg',
@@ -690,8 +692,8 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
     thickness: 0.1,
     scene: scene,
   } as ArtworkFrameOptions;
-  pictures.push(new ArtworkFrame(picture22));
-  /* SECOND WALL - OUTSIDE */
+  pictures.push(new ArtworkFrame(picture22));*/
+  // SECOND WALL - OUTSIDE 
 
   // expose Picture 1 to the console
   /* @ts-ignore */

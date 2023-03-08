@@ -84,7 +84,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
 //renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.8;
+renderer.toneMappingExposure = 1;
 /* @ts-ignore */
 //renderer.gammaFactor = 2.0;
 document.body.appendChild(renderer.domElement);
@@ -147,9 +147,10 @@ if (!isMobile) {
   });
 }
 
+const spinnerProgress = document.querySelector('#loader-container') as HTMLElement;
+
 const blocker = document.getElementById('blocker') as HTMLElement;
 const instructions = document.getElementById('instructions') as HTMLElement;
-
 
 if (!isMobile) {
   instructions.addEventListener('click', function () {
@@ -337,14 +338,13 @@ loader.load('Virtual Gallery COMP  1.gltf', (gltf: GLTF) => {
 
 
   loadModel(plant3).then((gltf: any) => {
-    for (let i = 0; i < 2; i++) {
+    //for (let i = 0; i < 2; i++) {
       gltf.scene.scale.set(2, 2, 2);
-      if (i === 0) gltf.scene.position.set(3, 0, 4); // todo: check
-      if (i === 1) gltf.scene.position.set(-13, 0, 4);
+      gltf.scene.position.set(3, 0, 4);
       gltf.scene.rotation.set(0, 0, 0);
 
       mixers.push(new THREE.AnimationMixer(gltf.scene))
-      const mixer = mixers[i];
+      const mixer = mixers[0];
       const action = mixer.clipAction((gltf as any).animations[0]);
       action.play();
 
@@ -361,7 +361,7 @@ loader.load('Virtual Gallery COMP  1.gltf', (gltf: GLTF) => {
       });
       scene.add(gltf.scene);
       worldOctree.fromGraphNode(gltf.scene);
-    }
+    //}
   })
   /*loadModel(plant3).then((gltf: any) => {
     gltf.scene.scale.set(2, 2, 2);
@@ -405,6 +405,10 @@ loader.load('Virtual Gallery COMP  1.gltf', (gltf: GLTF) => {
   /* @ts-ignore */
   //window.picture1 = p1;
 
+  //console.log("Loaded room model");
+  setTimeout(() => {
+    spinnerProgress.classList.add('hidden');
+  }, 2000);
   animate();
 });
 

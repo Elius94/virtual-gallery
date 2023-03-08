@@ -28,6 +28,7 @@
     "url": "git+https://github.com/Elius94/virtual-gallery.git"
   },
   "devDependencies": {
+    "pngquant-bin": "^6.0.1",
     "@types/three": "^0.149.0",
     "compress-images": "^2.0.5",
     "esbuild": "^0.17.5",

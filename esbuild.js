@@ -82,8 +82,8 @@ const buildOptions = {
                         
                     }, false,
                         { jpg: { engine: "mozjpeg", command: ["-quality", "60"] } },
-                        { png: { engine: "false", command: false } },
-                        { svg: { engine: "false", command: false } },
+                        { png: { engine: "pngquant", command: ["--quality=60-80", "-o"] } },
+                        { svg: { engine: "svgo", command: "--multipass" } },
                         { gif: { engine: "false", command: false } },
                         function (error, completed, statistic) {
                             console.log("-------------");

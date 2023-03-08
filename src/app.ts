@@ -299,9 +299,10 @@ function loadModel(url: string) {
 
 // load a room model
 // Room model 1
-loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
+//loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
+loader.load('vr_staircase_art_gallery_2018.glb', (gltf: GLTF) => {
   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
-  gltf.scene.scale.set(0.05, 0.05, 0.05);
+  //gltf.scene.scale.set(0.05, 0.05, 0.05);
   scene.add(gltf.scene);
   worldOctree.fromGraphNode(gltf.scene);
 

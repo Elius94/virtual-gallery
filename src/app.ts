@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 import { Octree } from 'three/examples/jsm/math/Octree.js';
 import { OctreeHelper } from 'three/examples/jsm/helpers/OctreeHelper.js';
@@ -14,7 +15,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 
 import { GUI } from './lil-gui.module.min.js';
-import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
+//import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
 
 import "./app.css"
 import "./touch-pad.css"
@@ -50,7 +51,7 @@ const texture = txtLoader.load(
   });
 
 scene.background = texture;
-scene.fog = new THREE.Fog(0x88ccee, 0, 50);
+scene.fog = new THREE.Fog(0x88ccee, 0, 150);
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.rotation.order = 'YXZ';
@@ -286,6 +287,9 @@ if (isMobile) {
 // Instantiate a loader
 let mixers: THREE.AnimationMixer[] = [];
 const loader = new GLTFLoader().setPath('./models/gltf/');
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('./loader/');
+loader.setDRACOLoader(dracoLoader);
 
 function loadModel(url: string) {
   return new Promise((resolve, reject) => {
@@ -300,7 +304,7 @@ function loadModel(url: string) {
 // load a room model
 // Room model 1
 //loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
-loader.load('vr_staircase_art_gallery_2018.glb', (gltf: GLTF) => {
+loader.load('Virtual Gallery COMP  1.gltf', (gltf: GLTF) => {
   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
   //gltf.scene.scale.set(0.05, 0.05, 0.05);
   scene.add(gltf.scene);
@@ -308,13 +312,12 @@ loader.load('vr_staircase_art_gallery_2018.glb', (gltf: GLTF) => {
 
   gltf.scene.traverse((child: any) => {
     if (child.isMesh && child.material.map !== null) {
+      // if is a texture flip y
+      child.material.map.flipY = false;
       child.castShadow = true;
       child.receiveShadow = true;
-      if (child.material.map) {
-        child.material.map.anisotropy = maxAnisotropy;
-        child.material.map.encoding = THREE.sRGBEncoding;
-
-      }
+      child.material.map.anisotropy = maxAnisotropy;
+      child.material.map.encoding = THREE.sRGBEncoding;
     }
   });
 
@@ -384,7 +387,7 @@ loader.load('vr_staircase_art_gallery_2018.glb', (gltf: GLTF) => {
     scene.add(gltf.scene);
   })*/
 
-  const picture1 = {
+  /*const picture1 = {
     picture: './textures/artworks/DSC09167.jpg',
     size: 3,
     x: -2.06,
@@ -396,11 +399,11 @@ loader.load('vr_staircase_art_gallery_2018.glb', (gltf: GLTF) => {
     thickness: 0.1,
     scene: scene,
   } as ArtworkFrameOptions;
-  const p1 = new ArtworkFrame(picture1);
+  const p1 = new ArtworkFrame(picture1);*/
 
   // expose Picture 1 to the console
   /* @ts-ignore */
-  window.picture1 = p1;
+  //window.picture1 = p1;
 
   animate();
 });

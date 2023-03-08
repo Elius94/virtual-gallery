@@ -82,7 +82,7 @@ const buildOptions = {
                         
                     }, false,
                         { jpg: { engine: "mozjpeg", command: ["-quality", "60"] } },
-                        { png: { engine: "pngquant", command: ["--quality=60-80", "-o"] } },
+                        { png: { engine: "pngquant", command: ["--quality=20-50", "-o"] } },
                         { svg: { engine: "svgo", command: "--multipass" } },
                         { gif: { engine: "false", command: false } },
                         function (error, completed, statistic) {
@@ -95,7 +95,7 @@ const buildOptions = {
                     )
                     fs.cpSync("src/models", "public/models", { recursive: true })
                     // copy src/textures to public/textures if exists (the whole folder, recursively)
-                    //fs.cpSync("src/textures", "public/textures", { recursive: true })
+                    fs.cpSync("src/loader", "public/loader", { recursive: true })
 
                     console.log("\u001b[36mAssets copied!\u001b[37m")
                 })

@@ -1,7 +1,7 @@
 .rotation-pad {
     position: absolute;
     right: 120px;
-    bottom: 0px;
+    top: 80% !important;
 }
 
 .rotation-pad .region {
@@ -34,8 +34,8 @@
 
 .movement-pad {
     position: absolute;
-    left: 60px;
-    bottom: 0px;
+    /*left: 60px;*/
+    top: 80% !important;
 }
 
 .movement-pad .region {

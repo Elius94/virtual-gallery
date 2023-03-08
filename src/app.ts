@@ -333,29 +333,33 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
 
 
   loadModel(plant3).then((gltf: any) => {
-    gltf.scene.scale.set(2, 2, 2);
-    gltf.scene.position.set(3, 0, 4);
-    gltf.scene.rotation.set(0, 0, 0);
+    for (let i = 0; i < 2; i++) {
+      gltf.scene.scale.set(2, 2, 2);
+      if (i === 0) gltf.scene.position.set(3, 0, 4); // todo: check
+      if (i === 1) gltf.scene.position.set(-13, 0, 4);
+      gltf.scene.rotation.set(0, 0, 0);
 
-    mixers.push(new THREE.AnimationMixer(gltf.scene))
-    const mixer = mixers[mixers.length - 1];
-    const action = mixer.clipAction((gltf as any).animations[0]);
-    action.play();
+      mixers.push(new THREE.AnimationMixer(gltf.scene))
+      const mixer = mixers[i];
+      const action = mixer.clipAction((gltf as any).animations[0]);
+      action.play();
 
-    gltf.scene.traverse((child: any) => {
-      if (child.isMesh && child.material.map !== null) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-        if (child.material.map) {
-          child.material.map.anisotropy = maxAnisotropy;
-          child.material.map.encoding = THREE.sRGBEncoding;
+      gltf.scene.traverse((child: any) => {
+        if (child.isMesh && child.material.map !== null) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          if (child.material.map) {
+            child.material.map.anisotropy = maxAnisotropy;
+            child.material.map.encoding = THREE.sRGBEncoding;
 
+          }
         }
-      }
-    });
-    scene.add(gltf.scene);
+      });
+      scene.add(gltf.scene);
+      worldOctree.fromGraphNode(gltf.scene);
+    }
   })
-  loadModel(plant3).then((gltf: any) => {
+  /*loadModel(plant3).then((gltf: any) => {
     gltf.scene.scale.set(2, 2, 2);
     gltf.scene.position.set(-13, 0, 4);
     gltf.scene.rotation.set(0, 0, 0);
@@ -377,7 +381,7 @@ loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
       }
     });
     scene.add(gltf.scene);
-  })
+  })*/
 
   const picture1 = {
     picture: './textures/artworks/DSC09167.jpg',

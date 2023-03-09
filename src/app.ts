@@ -14,7 +14,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 
-import { GUI } from './lil-gui.module.min.js';
+//import { GUI } from './lil-gui.module.min.js';
 //import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
 
 import "./app.css"
@@ -104,10 +104,15 @@ composer.setSize(window.innerWidth, window.innerHeight)
 composer.addPass(new RenderPass(scene, camera));
 composer.addPass(new ShaderPass(GammaCorrectionShader));
 
-const stats = new (Stats as any)();
-stats.domElement.style.position = 'absolute';
-stats.domElement.style.top = '0px';
-document.body.appendChild(stats.domElement);
+// check if in the url there is "debug" parameter
+const debug = window.location.search.indexOf('debug') !== -1;
+let stats: any = null;
+if (debug) {
+  stats = new (Stats as any)();
+  stats.domElement.style.position = 'absolute';
+  stats.domElement.style.top = '0px';
+  document.body.appendChild(stats.domElement);
+}
 
 const GRAVITY = 30;
 
@@ -305,7 +310,7 @@ function loadModel(url: string) {
 // load a room model
 // Room model 1
 //loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
-loader.load('Virtual Gallery COMP  1.gltf', (gltf: GLTF) => {
+loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
   //gltf.scene.scale.set(0.05, 0.05, 0.05);
   scene.add(gltf.scene);
@@ -313,8 +318,6 @@ loader.load('Virtual Gallery COMP  1.gltf', (gltf: GLTF) => {
 
   gltf.scene.traverse((child: any) => {
     if (child.isMesh && child.material.map !== null) {
-      // if is a texture flip y
-      child.material.map.flipY = false;
       child.castShadow = true;
       child.receiveShadow = true;
       child.material.map.anisotropy = maxAnisotropy;
@@ -327,11 +330,11 @@ loader.load('Virtual Gallery COMP  1.gltf', (gltf: GLTF) => {
   scene.add(helper);
 
   /* @ts-ignore */
-  const gui = new GUI({ width: 200 }) as any;
+  /*const gui = new GUI({ width: 200 }) as any;
   gui.add({ debug: false }, 'debug')
     .onChange(function (value: boolean) {
       helper.visible = value;
-    });
+    });*/
 
   // Add plants to the scene
   const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
@@ -434,7 +437,7 @@ function animate() {
 
   renderer.render(scene, camera);
   composer.render();
-  stats.update();
+  if (debug) stats.update();
   requestAnimationFrame(animate);
 
   const delta = clock.getDelta();

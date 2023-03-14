@@ -51,7 +51,7 @@ const texture = txtLoader.load(
   });
 
 scene.background = texture;
-scene.fog = new THREE.Fog(0x88ccee, 0, 150);
+scene.fog = new THREE.Fog(0x88ccee, 0, 170);
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.rotation.order = 'YXZ';
@@ -61,7 +61,7 @@ fillLight1.position.set(2, 1, 1);
 scene.add(fillLight1);
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(- 5, 25, - 1);
+directionalLight.position.set(- 5, 20, - 1);
 directionalLight.castShadow = true;
 directionalLight.shadow.camera.near = 0.01;
 directionalLight.shadow.camera.far = 500;
@@ -84,7 +84,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
 //renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1;
+renderer.toneMappingExposure = 1.5;
 /* @ts-ignore */
 //renderer.gammaFactor = 2.0;
 document.body.appendChild(renderer.domElement);
@@ -297,7 +297,7 @@ const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('./loader/');
 loader.setDRACOLoader(dracoLoader);
 
-function loadModel(url: string) {
+/*function loadModel(url: string) {
   return new Promise((resolve, reject) => {
     loader.load(url, (gltf) => {
       resolve(gltf)
@@ -305,7 +305,7 @@ function loadModel(url: string) {
       reject(error)
     })
   })
-}
+}*/
 
 // load a room model
 // Room model 1
@@ -337,7 +337,7 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
     });*/
 
   // Add plants to the scene
-  const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
+  /*const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
 
 
   loadModel(plant3).then((gltf: any) => {
@@ -365,7 +365,7 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
       scene.add(gltf.scene);
       worldOctree.fromGraphNode(gltf.scene);
     //}
-  })
+  })*/
   /*loadModel(plant3).then((gltf: any) => {
     gltf.scene.scale.set(2, 2, 2);
     gltf.scene.position.set(-13, 0, 4);

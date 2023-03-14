@@ -24,15 +24,15 @@ import TouchControls from './touch-controller/TouchControls.js';
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-const txtLoader = new THREE.TextureLoader();
+//const txtLoader = new THREE.TextureLoader();
 const clock = new THREE.Clock();
 const scene = new THREE.Scene();
 
-//scene.background = new THREE.Color(0x88ccee);
+scene.background = new THREE.Color(0x88ccee);
 // Put a picture in the background
 //const texture = txtLoader.load('./textures/general/DSC02177-Modifica.jpg');
 // Add spotlights to the scene
-/*const spotLights = [
+const spotLights = [
   new THREE.SpotLight(0xffffff, 1, 0, Math.PI / 2, 0.5),
 ];
 
@@ -40,9 +40,9 @@ spotLights[0].position.set(10, 10, 0);
 spotLights[0].target.position.set(0, 0, 0);
 spotLights[0].castShadow = true;
 
-scene.add(spotLights[0]);*/
+scene.add(spotLights[0]);
 
-const texture = txtLoader.load(
+/*const texture = txtLoader.load(
   './textures/general/Giau_2.jpg',
   () => {
     const rt = new THREE.WebGLCubeRenderTarget(texture.image.height);
@@ -50,7 +50,7 @@ const texture = txtLoader.load(
     scene.background = rt.texture;
   });
 
-scene.background = texture;
+scene.background = texture;*/
 scene.fog = new THREE.Fog(0x88ccee, 0, 170);
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -84,7 +84,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
 //renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.5;
+renderer.toneMappingExposure = 1;
 /* @ts-ignore */
 //renderer.gammaFactor = 2.0;
 document.body.appendChild(renderer.domElement);

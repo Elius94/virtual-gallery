@@ -14,7 +14,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 
-//import { GUI } from './lil-gui.module.min.js';
+import { GUI } from './lil-gui.module.min.js';
 //import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
 
 import "./app.css"
@@ -23,6 +23,14 @@ import TouchControls from './touch-controller/TouchControls.js';
 
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+let textureQuality = "HD"
+
+// Check if quality argument is passed in the url and set the texture quality accordingly
+const args = new URLSearchParams(location.search);
+if (args.has('quality')) {
+  textureQuality = args.get('quality') || "HD";
+}
 
 //const txtLoader = new THREE.TextureLoader();
 const clock = new THREE.Clock();
@@ -292,7 +300,7 @@ if (isMobile) {
 
 // Instantiate a loader
 let mixers: THREE.AnimationMixer[] = [];
-const loader = new GLTFLoader().setPath('./models/gltf/');
+const loader = new GLTFLoader().setPath(`/models/gltf/${textureQuality}/`);
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('./loader/');
 loader.setDRACOLoader(dracoLoader);
@@ -330,11 +338,21 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
   scene.add(helper);
 
   /* @ts-ignore */
-  /*const gui = new GUI({ width: 200 }) as any;
+  const gui = new GUI({ width: 200 }) as any;
+  gui.domElement.addEventListener("click", () =>{
+    document.exitPointerLock()
+  })
+  /* @ts-ignore */
+  window.gui = gui;
   gui.add({ debug: false }, 'debug')
     .onChange(function (value: boolean) {
       helper.visible = value;
-    });*/
+    });
+  gui.add({ textureQuality }, 'quality', ['LD', 'SD', 'MD', 'HD'])
+    .onChange(function (value: string) {
+      textureQuality = value;
+      location.replace(`?quality=${value}`)
+    });
 
   // Add plants to the scene
   /*const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'

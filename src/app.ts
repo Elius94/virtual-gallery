@@ -301,7 +301,7 @@ if (isMobile) {
 
 // Instantiate a loader
 let mixers: THREE.AnimationMixer[] = [];
-const loader = new GLTFLoader().setPath(`/models/gltf/${textureQuality}/`);
+const loader = new GLTFLoader().setPath(`./models/gltf/${textureQuality}/`);
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('./loader/');
 loader.setDRACOLoader(dracoLoader);

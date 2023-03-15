@@ -83,7 +83,7 @@ directionalLight.shadow.radius = 4;
 directionalLight.shadow.bias = - 0.00006;
 scene.add(directionalLight);
 
-//const container = document.getElementById('container') as HTMLElement;
+const container = document.getElementById('container-renderer') as HTMLElement;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -95,7 +95,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1;
 /* @ts-ignore */
 //renderer.gammaFactor = 2.0;
-document.body.appendChild(renderer.domElement);
+container.appendChild(renderer.domElement);
 
 /* @ts-ignore */
 const target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
@@ -103,7 +103,7 @@ const target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight
   magFilter: THREE.LinearFilter,
   format: THREE.RGBAFormat,
   encoding: THREE.sRGBEncoding,
-  type: THREE.FloatType
+  type: THREE.FloatType,
 });
 
 const composer = new EffectComposer(renderer, target);
@@ -119,7 +119,7 @@ if (debug) {
   stats = new (Stats as any)();
   stats.domElement.style.position = 'absolute';
   stats.domElement.style.top = '0px';
-  document.body.appendChild(stats.domElement);
+  container.appendChild(stats.domElement);
 }
 
 const GRAVITY = 30;
@@ -147,9 +147,9 @@ if (!isMobile) {
     keyStates[event.code] = false;
   });
 
-  document.body.addEventListener('mousedown', () => {
+  container.addEventListener('mousedown', () => {
+    //console.log('requestPointerLock')
     document.body.requestPointerLock();
-    //mouseTime = performance.now();
   });
 
   document.body.addEventListener('mousemove', (event) => {
@@ -168,6 +168,7 @@ const instructions = document.getElementById('instructions') as HTMLElement;
 if (!isMobile) {
   instructions.addEventListener('click', function () {
     hideInstructions();
+    document.body.requestPointerLock();
   });
 }
 
@@ -325,11 +326,12 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
   worldOctree.fromGraphNode(gltf.scene);
 
   gltf.scene.traverse((child: any) => {
-    if (child.isMesh && child.material.map !== null) {
+    if (child.isMesh) {
       child.castShadow = true;
       child.receiveShadow = true;
-      child.material.map.anisotropy = maxAnisotropy;
-      child.material.map.encoding = THREE.sRGBEncoding;
+      if (child.material.map) {
+        child.material.map.anisotropy = maxAnisotropy;
+      }
     }
   });
 
@@ -339,16 +341,11 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
 
   /* @ts-ignore */
   const gui = new GUI({ width: 200 }) as any;
-  gui.domElement.addEventListener("click", () =>{
-    document.exitPointerLock()
-  })
-  /* @ts-ignore */
-  window.gui = gui;
   gui.add({ debug: false }, 'debug')
     .onChange(function (value: boolean) {
       helper.visible = value;
     });
-  gui.add({ textureQuality }, 'quality', ['LD', 'SD', 'MD', 'HD'])
+  gui.add({ quality: textureQuality }, 'quality', ['LD', 'SD', 'MD', 'HD'])
     .onChange(function (value: string) {
       textureQuality = value;
       location.replace(`?quality=${value}`)

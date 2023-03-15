@@ -28,6 +28,8 @@ body {
     font-size: 13px;
     line-height: 24px;
     overscroll-behavior: none;
+    padding: 0;
+    overflow: hidden;
 }
 
 a {
@@ -128,7 +130,7 @@ select {
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    z-index: 2;
+    /* z-index: 2; */
 }
 
 #loader-container h2 {

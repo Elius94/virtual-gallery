@@ -97,13 +97,13 @@ renderer.toneMappingExposure = 1;
 //renderer.gammaFactor = 2.0;
 container.appendChild(renderer.domElement);
 
-/* @ts-ignore */
 const target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
   minFilter: THREE.LinearFilter,
   magFilter: THREE.LinearFilter,
   format: THREE.RGBAFormat,
   encoding: THREE.sRGBEncoding,
-  type: THREE.FloatType,
+  //type: THREE.FloatType,
+  anisotropy: renderer.capabilities.getMaxAnisotropy()
 });
 
 const composer = new EffectComposer(renderer, target);

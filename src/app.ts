@@ -32,11 +32,11 @@ if (args.has('quality')) {
   textureQuality = args.get('quality') || "HD";
 }
 
-//const txtLoader = new THREE.TextureLoader();
+const txtLoader = new THREE.TextureLoader();
 const clock = new THREE.Clock();
 const scene = new THREE.Scene();
 
-scene.background = new THREE.Color(0x88ccee);
+//scene.background = new THREE.Color(0x88ccee);
 // Put a picture in the background
 //const texture = txtLoader.load('./textures/general/DSC02177-Modifica.jpg');
 // Add spotlights to the scene
@@ -50,15 +50,15 @@ spotLights[0].castShadow = true;
 
 scene.add(spotLights[0]);
 
-/*const texture = txtLoader.load(
-  './textures/general/Giau_2.jpg',
+const texture = txtLoader.load(
+  `./textures/general/${textureQuality}/GIAU_SKY.jpg`,
   () => {
     const rt = new THREE.WebGLCubeRenderTarget(texture.image.height);
     rt.fromEquirectangularTexture(renderer, texture);
     scene.background = rt.texture;
   });
 
-scene.background = texture;*/
+scene.background = texture;
 scene.fog = new THREE.Fog(0x88ccee, 0, 170);
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -113,14 +113,8 @@ composer.addPass(new RenderPass(scene, camera));
 composer.addPass(new ShaderPass(GammaCorrectionShader));
 
 // check if in the url there is "debug" parameter
-const debug = window.location.search.indexOf('debug') !== -1;
+let debug = window.location.search.indexOf('debug') !== -1;
 let stats: any = null;
-if (debug) {
-  stats = new (Stats as any)();
-  stats.domElement.style.position = 'absolute';
-  stats.domElement.style.top = '0px';
-  container.appendChild(stats.domElement);
-}
 
 const GRAVITY = 30;
 
@@ -364,9 +358,18 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
 
   /* @ts-ignore */
   const gui = new GUI({ width: 200 }) as any;
-  gui.add({ debug: false }, 'debug')
+  gui.add({ debug: debug }, 'debug')
     .onChange(function (value: boolean) {
       helper.visible = value;
+      debug = value;
+      if (value) {
+        stats = new (Stats as any)();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.top = '0px';
+        container.appendChild(stats.domElement);
+      } else {
+        container.removeChild(stats.domElement);
+      }
     });
   gui.add({ quality: textureQuality }, 'quality', ['LD', 'SD', 'MD', 'HD'])
     .onChange(function (value: string) {

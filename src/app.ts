@@ -160,7 +160,13 @@ if (!isMobile) {
   });
 }
 
-const spinnerProgress = document.querySelector('#loader-container') as HTMLElement;
+const progress = document.querySelector('#loader-container') as HTMLElement;
+
+function setLoaderPercentage(percentage: number) {
+  const loader = document.querySelector('.loader') as HTMLElement;
+  const loaderWidth = percentage / 100 * window.innerWidth * 0.9; // 90% of window width
+  loader.style.width = `${loaderWidth}px`;
+}
 
 const blocker = document.getElementById('blocker') as HTMLElement;
 const instructions = document.getElementById('instructions') as HTMLElement;
@@ -301,7 +307,24 @@ if (isMobile) {
 
 // Instantiate a loader
 let mixers: THREE.AnimationMixer[] = [];
-const loader = new GLTFLoader().setPath(`./models/gltf/${textureQuality}/`);
+const manager = new THREE.LoadingManager();
+
+manager.onLoad = function () {
+  console.log('Loading complete!');
+  progress.classList.add('hidden');
+  animate();
+};
+
+manager.onError = function (url) {
+  console.log('There was an error loading ' + url);
+};
+
+manager.onProgress = function (_url, itemsLoaded, itemsTotal) {
+  //console.log('Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
+  setLoaderPercentage(itemsLoaded / itemsTotal * 100);
+};
+
+const loader = new GLTFLoader(manager).setPath(`./models/gltf/${textureQuality}/`);
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('./loader/');
 loader.setDRACOLoader(dracoLoader);
@@ -422,12 +445,6 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
   // expose Picture 1 to the console
   /* @ts-ignore */
   //window.picture1 = p1;
-
-  //console.log("Loaded room model");
-  setTimeout(() => {
-    spinnerProgress.classList.add('hidden');
-  }, 2000);
-  animate();
 });
 
 function teleportPlayerIfOob() {

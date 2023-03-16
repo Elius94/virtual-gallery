@@ -120,7 +120,7 @@ select {
 }
 
 #loader-container {
-    background-color: #000;
+    background-color: #050505;
     position: absolute;
     top: 0;
     left: 0;
@@ -137,64 +137,77 @@ select {
     color: #e9e9e9;
 }
 
-.loader {
-    left: calc(50% - 15vw);
-    right: 50%;
-    position: absolute;
+.loader-align {
+    margin-top: 30px;
+    width: 80%;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    max-width: 30vw;
+    justify-content: flex-start;
+    flex-direction: row;
 }
 
-.loader:before,
-.loader:after {
-    content: "";
+.loader {
+    width: 0;
+    height: 4.8px;
+    display: inline-block;
+    position: relative;
+    background: #FFF;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    box-sizing: border-box;
+    /* animation: animFw 8s linear infinite; */
+}
+
+.loader::after,
+.loader::before {
+    content: '';
+    width: 10px;
+    height: 1px;
+    background: #FFF;
     position: absolute;
-    border-radius: 50%;
-    animation: pulsOut 1.8s ease-in-out infinite;
-    filter: drop-shadow(0 0 1rem rgba(255, 255, 255, 0.75));
+    top: 9px;
+    right: -2px;
+    opacity: 0;
+    transform: rotate(-45deg) translateX(0px);
+    box-sizing: border-box;
+    animation: coli1 0.3s linear infinite;
 }
 
-.loader:before {
-    width: 100%;
-    padding-bottom: 100%;
-    box-shadow: inset 0 0 0 1rem #fff;
-    animation-name: pulsIn;
+.loader::before {
+    top: -4px;
+    transform: rotate(45deg);
+    animation: coli2 0.3s linear infinite;
 }
 
-.loader:after {
-    width: calc(100% - 2rem);
-    padding-bottom: calc(100% - 2rem);
-    box-shadow: 0 0 0 0 #fff;
-}
-
-@keyframes pulsIn {
+/* @keyframes animFw {
     0% {
-        box-shadow: inset 0 0 0 1rem #fff;
-        opacity: 1;
+        width: 0;
     }
 
-    50%,
     100% {
-        box-shadow: inset 0 0 0 0 #fff;
+        width: 90%;
+    }
+} */
+
+@keyframes coli1 {
+    0% {
+        transform: rotate(-45deg) translateX(0px);
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: rotate(-45deg) translateX(-45px);
         opacity: 0;
     }
 }
 
-@keyframes pulsOut {
-
-    0%,
-    50% {
-        box-shadow: 0 0 0 0 #fff;
-        opacity: 0;
+@keyframes coli2 {
+    0% {
+        transform: rotate(45deg) translateX(0px);
+        opacity: 1;
     }
 
     100% {
-        box-shadow: 0 0 0 1rem #fff;
-        opacity: 1;
+        transform: rotate(45deg) translateX(-45px);
+        opacity: 0.7;
     }
 }
 

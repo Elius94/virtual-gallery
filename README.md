@@ -1,5 +1,6 @@
 # virtual-gallery
-![image](https://user-images.githubusercontent.com/14907987/227293599-a628f81c-b867-4495-a692-cc7c620365df.png)
+![image](https://user-images.githubusercontent.com/14907987/227297437-8a564f53-12aa-43a9-91a1-163dc89ae500.png)
+
 
 ## Description
 A THREE.JS virtual photo gallery. A 3D exhibition to show some of my landscapes prints.

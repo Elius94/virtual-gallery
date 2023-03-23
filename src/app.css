@@ -2,7 +2,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background-color: #ffffff4d;
+    background-color: #0000004d;
 }
 
 #instructions {
@@ -119,8 +119,7 @@ select {
     padding: 10px;
 }
 
-#loader-container {
-    background-color: #050505;
+#loader-box {
     position: absolute;
     top: 0;
     left: 0;
@@ -130,19 +129,57 @@ select {
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    background: #000;
+    z-index: 2;
+}
+
+#loader-container {
+    /* Add the blur effect */
+    /* filter: blur(4px);
+    -webkit-filter: blur(4px); */
+    background: 
+        radial-gradient(transparent, black),
+        url("./textures/bg/20220521-DSC08782.jpg");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+	background-clip: text;
+	-webkit-background-clip: text;
+    /* background-color: #050505; */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+	color: transparent;
     /* z-index: 2; */
 }
 
+#loader-container h1 {
+    /* color: #e9e9e9; */
+	color: transparent;
+    font-size: 30vw;
+}
+
 #loader-container h2 {
-    color: #e9e9e9;
+    /* color: #e9e9e9; */
+	color: #403746;
+    position: fixed;
+    bottom: 125px;
 }
 
 .loader-align {
-    margin-top: 30px;
+    /* margin-top: 30px; */
     width: 80%;
     display: flex;
     justify-content: flex-start;
     flex-direction: row;
+    bottom: 94px;
+    position: absolute;
 }
 
 .loader {
@@ -150,7 +187,7 @@ select {
     height: 4.8px;
     display: inline-block;
     position: relative;
-    background: #FFF;
+    background: #403746;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
     box-sizing: border-box;
     /* animation: animFw 8s linear infinite; */
@@ -161,7 +198,7 @@ select {
     content: '';
     width: 10px;
     height: 1px;
-    background: #FFF;
+    background: #403746;
     position: absolute;
     top: 9px;
     right: -2px;
@@ -211,8 +248,32 @@ select {
     }
 }
 
+#copyright {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    text-align: center;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    pointer-events: none;
+    z-index: 1;
+    /* TODO Solve this in HTML */
+}
+
 .hidden {
     visibility: hidden;
     opacity: 0;
     transition: visibility 0s 2s, opacity 2s linear;
 }
+
+.hidden-05 {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s 0.5s, opacity 0.5s linear;
+}
+

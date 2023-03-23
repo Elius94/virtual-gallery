@@ -8,7 +8,7 @@ import sharp from "sharp"
 import path from "path"
 
 const INPUT_IMAGE_PATH = "src/textures/"
-const EXCLUDED_PATHS = ["src/textures/controller"]
+const EXCLUDED_PATHS = ["src/textures/controller", "src/textures/bg"]
 const outputQualityFormats = {
     "HD": {
         size: 4096,

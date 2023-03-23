@@ -24,7 +24,7 @@ import TouchControls from './touch-controller/TouchControls.js';
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-let textureQuality = "HD"
+let textureQuality = isMobile ? "LD" : "HD";
 
 // Check if quality argument is passed in the url and set the texture quality accordingly
 const args = new URLSearchParams(location.search);
@@ -51,7 +51,7 @@ spotLights[0].castShadow = true;
 scene.add(spotLights[0]);
 
 const texture = txtLoader.load(
-  `./textures/general/${textureQuality}/GIAU_SKY.jpg`,
+  `./textures/general/${textureQuality}/PANO0001_pano.jpg`,
   () => {
     const rt = new THREE.WebGLCubeRenderTarget(texture.image.height);
     rt.fromEquirectangularTexture(renderer, texture);
@@ -122,7 +122,7 @@ const STEPS_PER_FRAME = 5;
 
 const worldOctree = new Octree();
 
-const playerCollider = new Capsule(new THREE.Vector3(0, 0.35, 0), new THREE.Vector3(0, 1, 0), 0.35);
+const playerCollider = new Capsule(new THREE.Vector3(0, 0.1, 0), new THREE.Vector3(0, 1, 0), 0.35);
 
 const playerVelocity = new THREE.Vector3();
 const playerDirection = new THREE.Vector3();
@@ -154,12 +154,35 @@ if (!isMobile) {
   });
 }
 
-const progress = document.querySelector('#loader-container') as HTMLElement;
+const progress = document.querySelector('#loader-box') as HTMLElement;
 
 function setLoaderPercentage(percentage: number) {
   const loader = document.querySelector('.loader') as HTMLElement;
   const loaderWidth = percentage / 100 * window.innerWidth * 0.9; // 90% of window width
   loader.style.width = `${loaderWidth}px`;
+}
+
+const welcomeTexts = [
+  { text: 'Hi!', delay: 1000, size: "30vw" },
+  { text: 'Welcome to my', delay: 1000, size: "12vw" },
+  { text: 'Virtual Gallery', delay: 1500, size: "10vw" },
+  { text: 'Enjoy your visit =)', delay: 1000, size: "8vw" },
+];
+
+function setWelcomeText(text: string, size: string) {
+  const welcomeText = document.querySelector('#welcomeText') as HTMLElement;
+  welcomeText.innerText = text;
+  welcomeText.style.fontSize = size;
+}
+
+function startWelcomeTextCarosel(index: number) {
+  setTimeout(() => {
+    setWelcomeText(welcomeTexts[index].text, welcomeTexts[index].size);
+    index++;
+    if (index < welcomeTexts.length) {
+      startWelcomeTextCarosel(index++);
+    }
+  }, welcomeTexts[index].delay);
 }
 
 const blocker = document.getElementById('blocker') as HTMLElement;
@@ -173,13 +196,15 @@ if (!isMobile) {
 }
 
 function hideInstructions() {
-  instructions.style.display = 'none';
-  blocker.style.display = 'none';
+  blocker.classList.add('hidden-05');
+  /*instructions.style.display = 'none';
+  blocker.style.display = 'none';*/
 }
 
 function showInstructions() {
-  blocker.style.display = 'block';
-  instructions.style.display = '';
+  blocker.classList.remove('hidden-05');
+  /*instructions.style.display = 'block';
+  blocker.style.display = 'block';*/
 }
 
 if (!isMobile) {
@@ -306,6 +331,9 @@ const manager = new THREE.LoadingManager();
 manager.onLoad = function () {
   console.log('Loading complete!');
   progress.classList.add('hidden');
+  if (!isMobile) {
+    showInstructions();
+  }
   animate();
 };
 
@@ -315,7 +343,8 @@ manager.onError = function (url) {
 
 manager.onProgress = function (_url, itemsLoaded, itemsTotal) {
   //console.log('Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
-  setLoaderPercentage(itemsLoaded / itemsTotal * 100);
+  const percentage = itemsLoaded / itemsTotal * 100;
+  setLoaderPercentage(percentage);
 };
 
 const loader = new GLTFLoader(manager).setPath(`./models/gltf/${textureQuality}/`);
@@ -332,6 +361,8 @@ loader.setDRACOLoader(dracoLoader);
     })
   })
 }*/
+
+startWelcomeTextCarosel(0);
 
 // load a room model
 // Room model 1
@@ -477,8 +508,4 @@ function animate() {
 
   const delta = clock.getDelta();
   mixers.forEach(mixer => mixer.update(delta))
-}
-
-if (isMobile) {
-  hideInstructions();
 }

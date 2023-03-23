@@ -1,14 +1,14 @@
 {
-    "title": "360 Viewer",
-    "description": "360 Viewer",
-    "keywords": "virtualtour, virtual, tour, vr, 360, photosphere, streetview",
+    "title": "Virtual Gallery",
+    "description": "Landscapes photography gallery by Elia Lazzari",
+    "keywords": "virtualtour, virtual, tour, vr, 360, photosphere, gallery, mostra, galleria",
     "author": "Elia Lazzari",
     "openGraph": {
         "url": "https://example.it",
-        "title": "360 Viewer",
-        "description": "360 Viewer",
+        "title": "Virtual Gallery",
+        "description": "Virtual Gallery",
         "image": "https://example.com/image.jpg",
-        "site_name": "360 Viewer",
+        "site_name": "Virtual Gallery",
         "type": "website",
         "locale": "it_IT"
     },
@@ -16,8 +16,8 @@
         "image": "https://example.com/image.jpg",
         "url": "https://example.it",
         "card": "summary_large_image",
-        "title": "360 Viewer",
-        "description": "360 Viewer"
+        "title": "Virtual Gallery",
+        "description": "Virtual Gallery"
     },
     "favicon": null,
     "manifest": null,

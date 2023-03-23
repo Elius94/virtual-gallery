@@ -1,198 +1,511 @@
 import * as THREE from 'three';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
-import "./app.css";
-import Scene from './scene';
-import Floor from './floor';
-import Ceiling from './ceiling';
-import Player from './player';
-import Renderer from './renderer';
-import Walls from './walls';
 
-const room = {
-  width: 2200,
-  height: 400,
-  depth: 1300
+import Stats from 'three/examples/jsm/libs/stats.module.js';
+
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+
+import { Octree } from 'three/examples/jsm/math/Octree.js';
+import { OctreeHelper } from 'three/examples/jsm/helpers/OctreeHelper.js';
+
+import { Capsule } from 'three/examples/jsm/math/Capsule.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
+
+import { GUI } from './lil-gui.module.min.js';
+//import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
+
+import "./app.css"
+import "./touch-pad.css"
+import TouchControls from './touch-controller/TouchControls.js';
+
+// Check if we are running in a mobile device
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+let textureQuality = isMobile ? "LD" : "HD";
+
+// Check if quality argument is passed in the url and set the texture quality accordingly
+const args = new URLSearchParams(location.search);
+if (args.has('quality')) {
+  textureQuality = args.get('quality') || "HD";
 }
 
-let scene: Scene;
-let player: Player;
-let renderer: Renderer;
-let floor: Floor;
-let ceiling: Ceiling;
-let walls: Walls;
+const txtLoader = new THREE.TextureLoader();
+const clock = new THREE.Clock();
+const scene = new THREE.Scene();
 
-const light1 = new THREE.PointLight(0xffffff, 1, 100);
-light1.position.set(-300, 200, 200);
-const light2 = new THREE.PointLight(0xffffff, 1, 100);
-light2.position.set(300, 200, 200);
-const light3 = new THREE.PointLight(0xffffff, 1, 100);
-light3.position.set(-300, 200, -200);
-const light4 = new THREE.PointLight(0xffffff, 1, 100);
-light4.position.set(300, 200, -200);
+//scene.background = new THREE.Color(0x88ccee);
+// Put a picture in the background
+//const texture = txtLoader.load('./textures/general/DSC02177-Modifica.jpg');
+// Add spotlights to the scene
+const spotLights = [
+  new THREE.SpotLight(0xffffff, 1, 0, Math.PI / 2, 0.5),
+];
 
+spotLights[0].position.set(10, 10, 0);
+spotLights[0].target.position.set(0, 0, 0);
+spotLights[0].castShadow = true;
 
-const objects = [] as THREE.Object3D[];
-let controls: PointerLockControls;
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
-let canJump = false;
-let prevTime = performance.now();
+scene.add(spotLights[0]);
 
-let raycaster: THREE.Raycaster;
-
-const velocity = new THREE.Vector3();
-const direction = new THREE.Vector3();
-
-init();
-animate();
-
-function init() {
-  scene = new Scene();
-  player = new Player({ height: 100 });
-  renderer = new Renderer(window.innerWidth, window.innerHeight, window.devicePixelRatio);
-  document.body.appendChild(renderer.getDomElement());
-
-  walls = new Walls(room.depth, room.width, room.height);
-  walls.getWalls().forEach(wall => {
-    scene.add(wall);
-    objects.push(wall);
+const texture = txtLoader.load(
+  `./textures/general/${textureQuality}/PANO0001_pano.jpg`,
+  () => {
+    const rt = new THREE.WebGLCubeRenderTarget(texture.image.height);
+    rt.fromEquirectangularTexture(renderer, texture);
+    scene.background = rt.texture;
   });
 
-  floor = new Floor(room.depth, room.width);
-  scene.add(floor.getFloor());
+scene.background = texture;
+scene.fog = new THREE.Fog(0x88ccee, 0, 170);
 
-  ceiling = new Ceiling(room.depth, room.width, room.height);
-  scene.add(ceiling.getCeiling());
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.rotation.order = 'YXZ';
 
-  scene.add(light1);
-  scene.add(light2);
-  scene.add(light3);
-  scene.add(light4);
+const fillLight1 = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.2);
+fillLight1.position.set(2, 1, 1);
+scene.add(fillLight1);
 
-  controls = new PointerLockControls(player.getPlayer(), document.body);
-  const blocker = document.getElementById('blocker') as HTMLElement;
-  const instructions = document.getElementById('instructions') as HTMLElement;
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(- 5, 20, - 1);
+directionalLight.castShadow = true;
+directionalLight.shadow.camera.near = 0.01;
+directionalLight.shadow.camera.far = 500;
+directionalLight.shadow.camera.right = 30;
+directionalLight.shadow.camera.left = - 30;
+directionalLight.shadow.camera.top = 30;
+directionalLight.shadow.camera.bottom = - 30;
+directionalLight.shadow.mapSize.width = 1024;
+directionalLight.shadow.mapSize.height = 1024;
+directionalLight.shadow.radius = 4;
+directionalLight.shadow.bias = - 0.00006;
+scene.add(directionalLight);
 
+const container = document.getElementById('container-renderer') as HTMLElement;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.VSMShadowMap;
+//renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1;
+/* @ts-ignore */
+//renderer.gammaFactor = 2.0;
+container.appendChild(renderer.domElement);
+
+const target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
+  minFilter: THREE.LinearFilter,
+  magFilter: THREE.LinearFilter,
+  format: THREE.RGBAFormat,
+  encoding: THREE.sRGBEncoding,
+  //type: THREE.FloatType,
+  anisotropy: renderer.capabilities.getMaxAnisotropy()
+});
+
+const composer = new EffectComposer(renderer, target);
+composer.setPixelRatio(window.devicePixelRatio);
+composer.setSize(window.innerWidth, window.innerHeight)
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new ShaderPass(GammaCorrectionShader));
+
+// check if in the url there is "debug" parameter
+let debug = window.location.search.indexOf('debug') !== -1;
+let stats: any = null;
+
+const GRAVITY = 30;
+
+const STEPS_PER_FRAME = 5;
+
+const worldOctree = new Octree();
+
+const playerCollider = new Capsule(new THREE.Vector3(0, 0.1, 0), new THREE.Vector3(0, 1, 0), 0.35);
+
+const playerVelocity = new THREE.Vector3();
+const playerDirection = new THREE.Vector3();
+
+let playerOnFloor = false;
+//let mouseTime = 0;
+
+const keyStates = {} as { [key: string]: boolean };
+
+if (!isMobile) {
+  document.addEventListener('keydown', (event) => {
+    keyStates[event.code] = true;
+  });
+
+  document.addEventListener('keyup', (event) => {
+    keyStates[event.code] = false;
+  });
+
+  container.addEventListener('mousedown', () => {
+    //console.log('requestPointerLock')
+    document.body.requestPointerLock();
+  });
+
+  document.body.addEventListener('mousemove', (event) => {
+    if (document.pointerLockElement === document.body) {
+      camera.rotation.y -= event.movementX / 500;
+      camera.rotation.x -= event.movementY / 500;
+    }
+  });
+}
+
+const progress = document.querySelector('#loader-box') as HTMLElement;
+
+function setLoaderPercentage(percentage: number) {
+  const loader = document.querySelector('.loader') as HTMLElement;
+  const loaderWidth = percentage / 100 * window.innerWidth * 0.9; // 90% of window width
+  loader.style.width = `${loaderWidth}px`;
+}
+
+const welcomeTexts = [
+  { text: 'Hi!', delay: 1000, size: "30vw" },
+  { text: 'Welcome to my', delay: 1000, size: "12vw" },
+  { text: 'Virtual Gallery', delay: 1500, size: "10vw" },
+  { text: 'Enjoy your visit =)', delay: 1000, size: "8vw" },
+];
+
+function setWelcomeText(text: string, size: string) {
+  const welcomeText = document.querySelector('#welcomeText') as HTMLElement;
+  welcomeText.innerText = text;
+  welcomeText.style.fontSize = size;
+}
+
+function startWelcomeTextCarosel(index: number) {
+  setTimeout(() => {
+    setWelcomeText(welcomeTexts[index].text, welcomeTexts[index].size);
+    index++;
+    if (index < welcomeTexts.length) {
+      startWelcomeTextCarosel(index++);
+    }
+  }, welcomeTexts[index].delay);
+}
+
+const blocker = document.getElementById('blocker') as HTMLElement;
+const instructions = document.getElementById('instructions') as HTMLElement;
+
+if (!isMobile) {
   instructions.addEventListener('click', function () {
-    controls.lock();
+    hideInstructions();
+    document.body.requestPointerLock();
   });
+}
 
-  controls.addEventListener('lock', function () {
-    instructions.style.display = 'none';
-    blocker.style.display = 'none';
-  });
+function hideInstructions() {
+  blocker.classList.add('hidden-05');
+  /*instructions.style.display = 'none';
+  blocker.style.display = 'none';*/
+}
 
-  controls.addEventListener('unlock', function () {
-    blocker.style.display = 'block';
-    instructions.style.display = '';
-  });
+function showInstructions() {
+  blocker.classList.remove('hidden-05');
+  /*instructions.style.display = 'block';
+  blocker.style.display = 'block';*/
+}
 
-  scene.add(controls.getObject());
-
-  const onKeyDown = function (event: KeyboardEvent) {
-    switch (event.code) {
-      case "ArrowUp": // up
-      case "KeyW": // w
-        moveForward = true;
-        break;
-      case "ArrowLeft": // left
-      case "KeyA": // a
-        moveLeft = true;
-        break;
-      case "ArrowDown": // down
-      case "KeyS": // s
-        moveBackward = true;
-        break;
-      case "ArrowRight": // right
-      case "KeyD": // d
-        moveRight = true;
-        break;
-      case 'Space':
-        if (canJump === true) velocity.y += 350;
-        canJump = false;
-        break;
+if (!isMobile) {
+  document.addEventListener("pointerlockchange", () => {
+    if (document.pointerLockElement !== document.body) {
+      showInstructions();
+    } else {
+      hideInstructions();
     }
-  };
+  });
+}
 
-  const onKeyUp = function (event: KeyboardEvent) {
-    switch (event.code) {
-      case 'ArrowUp':
-      case 'KeyW':
-        moveForward = false;
-        break;
-      case 'ArrowLeft':
-      case 'KeyA':
-        moveLeft = false;
-        break;
-      case 'ArrowDown':
-      case 'KeyS':
-        moveBackward = false;
-        break;
-      case 'ArrowRight':
-      case 'KeyD':
-        moveRight = false;
-        break;
+window.addEventListener('resize', onWindowResize);
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function playerCollisions() {
+  const result = worldOctree.capsuleIntersect(playerCollider);
+  playerOnFloor = false;
+
+  if (result) {
+    playerOnFloor = result.normal.y > 0;
+    if (!playerOnFloor) {
+      playerVelocity.addScaledVector(result.normal, - result.normal.dot(playerVelocity));
     }
-  };
 
-  raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, - 1, 0), 0, 10);
-  document.addEventListener('keydown', onKeyDown, false);
-  document.addEventListener('keyup', onKeyUp, false);
+    playerCollider.translate(result.normal.multiplyScalar(result.depth));
+  }
+}
 
-  const onWindowResize = function () {
-    player.resize(window.innerWidth, window.innerHeight);
-    renderer.resize(window.innerWidth, window.innerHeight);
-  };
+function updatePlayer(deltaTime: number) {
+  let damping = Math.exp(- 4 * deltaTime) - 1;
 
-  window.addEventListener('resize', onWindowResize, false);
+  if (!playerOnFloor) {
+    playerVelocity.y -= GRAVITY * deltaTime;
+    // small air resistance
+    damping *= 0.1;
+  }
+
+  playerVelocity.addScaledVector(playerVelocity, damping);
+
+  const deltaPosition = playerVelocity.clone().multiplyScalar(deltaTime);
+  playerCollider.translate(deltaPosition);
+
+  playerCollisions();
+  camera.position.copy(playerCollider.end);
+}
+
+function getForwardVector() {
+  camera.getWorldDirection(playerDirection);
+  playerDirection.y = 0;
+  playerDirection.normalize();
+  return playerDirection;
+}
+
+function getSideVector() {
+
+  camera.getWorldDirection(playerDirection);
+  playerDirection.y = 0;
+  playerDirection.normalize();
+  playerDirection.cross(camera.up);
+
+  return playerDirection;
+
+}
+
+function controls(deltaTime: number) {
+
+  // gives a bit of air control
+  const speedDelta = deltaTime * (playerOnFloor ? 25 : 8);
+
+  if (keyStates['KeyW']) {
+    playerVelocity.add(getForwardVector().multiplyScalar(speedDelta));
+  }
+
+  if (keyStates['KeyS']) {
+    playerVelocity.add(getForwardVector().multiplyScalar(- speedDelta));
+  }
+
+  if (keyStates['KeyA']) {
+    playerVelocity.add(getSideVector().multiplyScalar(- speedDelta));
+  }
+
+  if (keyStates['KeyD']) {
+    playerVelocity.add(getSideVector().multiplyScalar(speedDelta));
+  }
+
+  if (playerOnFloor) {
+    if (keyStates['Space']) {
+      playerVelocity.y = 10;
+    }
+  }
+}
+
+if (isMobile) {
+  const padElement = document.getElementById('container3d') as HTMLDivElement
+  new TouchControls(padElement) as any
+
+  padElement.addEventListener('YawPitch', (event: any) => {
+    //console.log(event)
+    camera.rotation.x -= event.detail.deltaY / 200;
+    camera.rotation.y -= event.detail.deltaX / 200;
+  })
+
+  padElement.addEventListener('move', (event: any) => {
+    //console.log(event.detail.deltaY)
+    const x = -(event.detail.deltaX)
+    const y = event.detail.deltaY
+
+    const speedDelta = 0.01 * (playerOnFloor ? 12 : 4);
+    playerVelocity.add(getForwardVector().multiplyScalar(y * speedDelta));
+    playerVelocity.add(getSideVector().multiplyScalar(x * speedDelta));
+  })
+}
+
+// Instantiate a loader
+let mixers: THREE.AnimationMixer[] = [];
+const manager = new THREE.LoadingManager();
+
+manager.onLoad = function () {
+  console.log('Loading complete!');
+  progress.classList.add('hidden');
+  if (!isMobile) {
+    showInstructions();
+  }
+  animate();
+};
+
+manager.onError = function (url) {
+  console.log('There was an error loading ' + url);
+};
+
+manager.onProgress = function (_url, itemsLoaded, itemsTotal) {
+  //console.log('Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
+  const percentage = itemsLoaded / itemsTotal * 100;
+  setLoaderPercentage(percentage);
+};
+
+const loader = new GLTFLoader(manager).setPath(`./models/gltf/${textureQuality}/`);
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('./loader/');
+loader.setDRACOLoader(dracoLoader);
+
+/*function loadModel(url: string) {
+  return new Promise((resolve, reject) => {
+    loader.load(url, (gltf) => {
+      resolve(gltf)
+    }, undefined, (error) => {
+      reject(error)
+    })
+  })
+}*/
+
+startWelcomeTextCarosel(0);
+
+// load a room model
+// Room model 1
+//loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
+loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
+  const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+  //gltf.scene.scale.set(0.05, 0.05, 0.05);
+  scene.add(gltf.scene);
+  worldOctree.fromGraphNode(gltf.scene);
+
+  gltf.scene.traverse((child: any) => {
+    if (child.isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+      if (child.material.map) {
+        child.material.map.anisotropy = maxAnisotropy;
+      }
+    }
+  });
+
+  const helper = new OctreeHelper(worldOctree, 0x00ff00);
+  helper.visible = false;
+  scene.add(helper);
+
+  /* @ts-ignore */
+  const gui = new GUI({ width: 200 }) as any;
+  gui.add({ debug: debug }, 'debug')
+    .onChange(function (value: boolean) {
+      helper.visible = value;
+      debug = value;
+      if (value) {
+        stats = new (Stats as any)();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.top = '0px';
+        container.appendChild(stats.domElement);
+      } else {
+        container.removeChild(stats.domElement);
+      }
+    });
+  gui.add({ quality: textureQuality }, 'quality', ['LD', 'SD', 'MD', 'HD'])
+    .onChange(function (value: string) {
+      textureQuality = value;
+      location.replace(`?quality=${value}`)
+    });
+
+  // Add plants to the scene
+  /*const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
+
+
+  loadModel(plant3).then((gltf: any) => {
+    //for (let i = 0; i < 2; i++) {
+      gltf.scene.scale.set(2, 2, 2);
+      gltf.scene.position.set(3, 0, 4);
+      gltf.scene.rotation.set(0, 0, 0);
+
+      mixers.push(new THREE.AnimationMixer(gltf.scene))
+      const mixer = mixers[0];
+      const action = mixer.clipAction((gltf as any).animations[0]);
+      action.play();
+
+      gltf.scene.traverse((child: any) => {
+        if (child.isMesh && child.material.map !== null) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          if (child.material.map) {
+            child.material.map.anisotropy = maxAnisotropy;
+            child.material.map.encoding = THREE.sRGBEncoding;
+
+          }
+        }
+      });
+      scene.add(gltf.scene);
+      worldOctree.fromGraphNode(gltf.scene);
+    //}
+  })*/
+  /*loadModel(plant3).then((gltf: any) => {
+    gltf.scene.scale.set(2, 2, 2);
+    gltf.scene.position.set(-13, 0, 4);
+    gltf.scene.rotation.set(0, 0, 0);
+
+    mixers.push(new THREE.AnimationMixer(gltf.scene))
+    const mixer = mixers[mixers.length - 1];
+    const action = mixer.clipAction((gltf as any).animations[0]);
+    action.play();
+
+    gltf.scene.traverse((child: any) => {
+      if (child.isMesh && child.material.map !== null) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        if (child.material.map) {
+          child.material.map.anisotropy = maxAnisotropy;
+          child.material.map.encoding = THREE.sRGBEncoding;
+
+        }
+      }
+    });
+    scene.add(gltf.scene);
+  })*/
+
+  /*const picture1 = {
+    picture: './textures/artworks/DSC09167.jpg',
+    size: 3,
+    x: -2.06,
+    y: 1.5,
+    z: 2,
+    rotationX: 0,
+    rotationY: 1.58,
+    rotationZ: 0,
+    thickness: 0.1,
+    scene: scene,
+  } as ArtworkFrameOptions;
+  const p1 = new ArtworkFrame(picture1);*/
+
+  // expose Picture 1 to the console
+  /* @ts-ignore */
+  //window.picture1 = p1;
+});
+
+function teleportPlayerIfOob() {
+  if (camera.position.y <= - 25) {
+    playerCollider.start.set(0, 0.35, 0);
+    playerCollider.end.set(0, 1, 0);
+    playerCollider.radius = 0.35;
+    camera.position.copy(playerCollider.end);
+    camera.rotation.set(0, 0, 0);
+  }
 }
 
 function animate() {
+  const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME;
+  // we look for collisions in substeps to mitigate the risk of
+  // an object traversing another too quickly for detection.
+  for (let i = 0; i < STEPS_PER_FRAME; i++) {
+    controls(deltaTime);
+    updatePlayer(deltaTime);
+    teleportPlayerIfOob();
+  }
+
+  renderer.render(scene, camera);
+  composer.render();
+  if (debug) stats.update();
   requestAnimationFrame(animate);
 
-  const time = performance.now();
-
-  if (controls.isLocked === true) {
-    raycaster.ray.origin.copy(controls.getObject().position);
-    raycaster.ray.origin.y -= 10;
-
-    
-    const intersections = raycaster.intersectObjects(objects, false);
-    const onObject = intersections.length > 0;
-    const delta = (time - prevTime) / 1000;
-
-    velocity.x -= velocity.x * player.getSpeedMultiplier() * delta;
-    velocity.z -= velocity.z * player.getSpeedMultiplier() * delta;
-
-    velocity.y -= 9.8 * player.getMass() * delta; // 100.0 = mass
-
-    direction.z = Number(moveForward) - Number(moveBackward);
-    direction.x = Number(moveRight) - Number(moveLeft);
-    direction.normalize(); // this ensures consistent movements in all directions
-
-    if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
-    if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
-
-    if (onObject === true) {
-      velocity.y = Math.max(0, velocity.y);
-      canJump = true;
-    }
-
-    controls.moveRight(- velocity.x * delta);
-    controls.moveForward(- velocity.z * delta);
-
-    controls.getObject().position.y += (velocity.y * delta); // new behavior
-
-    if (controls.getObject().position.y < player.getHeight()) {
-      velocity.y = 0;
-      controls.getObject().position.y = player.getHeight();
-
-      canJump = true;
-    }
-  }
-  prevTime = time;
-
-  renderer.render(scene.getScene(), player.getPlayer());
+  const delta = clock.getDelta();
+  mixers.forEach(mixer => mixer.update(delta))
 }

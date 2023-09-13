@@ -12,7 +12,9 @@ import { Capsule } from 'three/examples/jsm/math/Capsule.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
+import { TAARenderPass } from "three/examples/jsm/postprocessing/TAARenderPass.js";
 
 import { GUI } from './lil-gui.module.min.js';
 //import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
@@ -20,11 +22,28 @@ import { GUI } from './lil-gui.module.min.js';
 import "./app.css"
 import "./touch-pad.css"
 import TouchControls from './touch-controller/TouchControls.js';
+import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
 
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 let textureQuality = isMobile ? "LD" : "HD";
+// check if in the url there is "debug" parameter
+let debug = window.location.search.indexOf('debug') !== -1;
+let aa_sl = 1;
+let aa_unbiased = false;
+let stats: any = null;
+let selectedShader = GammaCorrectionShader
+let selectedToneMapping = "ACESFilmicToneMapping";
+let toneMappingExp = 0.85;
+let toneMappingMethods = {
+  sRGBEncoding: THREE.sRGBEncoding,
+  LinearToneMapping: THREE.LinearToneMapping,
+  ReinhardToneMapping: THREE.ReinhardToneMapping,
+  CineonToneMapping: THREE.CineonToneMapping,
+  ACESFilmicToneMapping: THREE.ACESFilmicToneMapping,
+  CustomToneMapping: THREE.CustomToneMapping,
+}
 
 // Check if quality argument is passed in the url and set the texture quality accordingly
 const args = new URLSearchParams(location.search);
@@ -58,7 +77,6 @@ const texture = txtLoader.load(
     scene.background = rt.texture;
   });
 
-scene.background = texture;
 scene.fog = new THREE.Fog(0x88ccee, 0, 170);
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -91,9 +109,15 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
 //renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1;
+// renderer.toneMapping = THREE.LinearToneMapping;
+// renderer.toneMapping = THREE.ReinhardToneMapping;
+// renderer.toneMapping = THREE.CineonToneMapping;
+// renderer.toneMapping = THREE.ACESFilmicToneMapping;
+// renderer.toneMapping = THREE.CustomToneMapping;
+
 /* @ts-ignore */
+renderer.toneMapping = toneMappingMethods[selectedToneMapping];
+renderer.toneMappingExposure = toneMappingExp;
 //renderer.gammaFactor = 2.0;
 container.appendChild(renderer.domElement);
 
@@ -107,14 +131,20 @@ const target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight
 });
 
 const composer = new EffectComposer(renderer, target);
+
+const taaRenderPass = new TAARenderPass(scene, camera, 0xffffff, 1);
+taaRenderPass.unbiased = aa_unbiased;
+taaRenderPass.sampleLevel = aa_sl;
+composer.addPass(taaRenderPass); // default
+
+const rp = new RenderPass(scene, camera);
+rp.enabled = false;
+composer.addPass(rp);
+composer.addPass(new ShaderPass(selectedShader));
+
 composer.setPixelRatio(window.devicePixelRatio);
 composer.setSize(window.innerWidth, window.innerHeight)
-composer.addPass(new RenderPass(scene, camera));
-composer.addPass(new ShaderPass(GammaCorrectionShader));
 
-// check if in the url there is "debug" parameter
-let debug = window.location.search.indexOf('debug') !== -1;
-let stats: any = null;
 
 const GRAVITY = 30;
 
@@ -402,6 +432,31 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
         container.removeChild(stats.domElement);
       }
     });
+  gui.add({ "Antialiasing Level": aa_sl }, 'Antialiasing Level', [1, 2, 3, 4])
+    .onChange(function (value: number) {
+      aa_sl = value;
+      taaRenderPass.sampleLevel = aa_sl;
+    });
+  gui.add({ "Antialiasing unbiased": aa_unbiased }, 'Antialiasing unbiased')
+    .onChange(function (value: boolean) {
+      aa_unbiased = value;
+      taaRenderPass.unbiased = aa_unbiased;
+    });
+
+
+  gui.add({ "Tone Mapping": selectedToneMapping }, 'Tone Mapping', Object.keys(toneMappingMethods))
+    .onChange(function (value: string) {
+      selectedToneMapping = value;
+      /* @ts-ignore */
+      renderer.toneMapping = toneMappingMethods[selectedToneMapping];
+    });
+
+  gui.add({ "Tone Mapping Exposure": toneMappingExp }, 'Tone Mapping Exposure')
+    .onChange(function (value: number) {
+      toneMappingExp = value;
+      renderer.toneMappingExposure = toneMappingExp;
+    });
+
   gui.add({ quality: textureQuality }, 'quality', ['LD', 'SD', 'MD', 'HD'])
     .onChange(function (value: string) {
       textureQuality = value;
@@ -462,8 +517,8 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
     scene.add(gltf.scene);
   })*/
 
-  /*const picture1 = {
-    picture: './textures/artworks/DSC09167.jpg',
+  const picture1 = {
+    picture: './textures/SD/DSC00675-Edit.jpg',
     size: 3,
     x: -2.06,
     y: 1.5,
@@ -474,11 +529,17 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
     thickness: 0.1,
     scene: scene,
   } as ArtworkFrameOptions;
-  const p1 = new ArtworkFrame(picture1);*/
+  const p1 = new ArtworkFrame(picture1);
+
+  // for (var i = 0; i < 50; i++) {
+  //   picture1.x += 10
+  //   new ArtworkFrame(picture1);
+  // }
+
 
   // expose Picture 1 to the console
   /* @ts-ignore */
-  //window.picture1 = p1;
+  window.picture1 = p1;
 });
 
 function teleportPlayerIfOob() {

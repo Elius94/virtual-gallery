@@ -277,3 +277,6 @@ select {
     transition: visibility 0s 0.5s, opacity 0.5s linear;
 }
 
+#canvas3d {
+    background-color: #000;
+}

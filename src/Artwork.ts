@@ -99,6 +99,18 @@ class ArtworkFrame {
         this.mesh.position.z += z;
         return this.getPosition();
     }
+
+    increaseRotation(x: number, y: number, z: number) {
+        this.mesh.rotation.x += x;
+        this.mesh.rotation.y += y;
+        this.mesh.rotation.z += z;
+        return this.getRotation();
+    }
+
+    increaseSize(size: number) {
+        this.setSize(this.getSize() + size);
+        return this.getSize();
+    }
 }
 
 export default ArtworkFrame;

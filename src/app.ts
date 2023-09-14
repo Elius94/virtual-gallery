@@ -27,6 +27,8 @@ import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+const TUNING = true;
+
 let textureQuality = isMobile ? "LD" : "HD";
 // check if in the url there is "debug" parameter
 let debug = window.location.search.indexOf('debug') !== -1;
@@ -44,6 +46,478 @@ let toneMappingMethods = {
   ACESFilmicToneMapping: THREE.ACESFilmicToneMapping,
   CustomToneMapping: THREE.CustomToneMapping,
 }
+
+const artworks = [
+  {
+    name: "Opere d'arte 1",
+    description: "Descrizione dell'opera 1",
+    position: { x: 2.1649999999999983, y: 4.97000000000001, z: 11.944999999999922 },
+    rotation: { x: 6.2849999999999016, y: 3.1400000000000365, z: 81.67999999999611 },
+    size: 1.69, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/000031-2.jpg"
+  },
+  {
+    name: "Opere d'arte 2",
+    description: "Descrizione dell'opera 2",
+    position: { x: 0.6150000000000004, y: 4.97000000000001, z: 11.944999999999922 },
+    rotation: { x: 6.2849999999999016, y: 3.1400000000000365, z: 81.67999999999611 },
+    size: 1.69, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC09646.jpg"
+  },
+  {
+    name: "Opere d'arte 3",
+    description: "Descrizione dell'opera 3",
+    position: { x: -0.9350000000000006, y: 4.97000000000001, z: 11.944999999999922 },
+    rotation: { x: 6.2849999999999016, y: 3.1400000000000365, z: 81.67999999999611 },
+    size: 1.69, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC00675-Edit.jpg"
+  },
+  {
+    name: "Opere d'arte 4",
+    description: "Descrizione dell'opera 4",
+    position: { x: -7.284999999999908, y: 1.7700000000000518, z: 11.944999999999922 },
+    rotation: { x: 6.2849999999999016, y: 3.1400000000000365, z: 81.67999999999611 },
+    size: 1.69, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC08787.jpg"
+  },
+  {
+    name: "Opere d'arte 5",
+    description: "Descrizione dell'opera 5",
+    position: { x: 5, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DJI_0711-3-Pano.jpg"
+  },
+  {
+    name: "Opere d'arte 6",
+    description: "Descrizione dell'opera 6",
+    position: { x: 6, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DJI_0713.jpg"
+  },
+  {
+    name: "Opere d'arte 7",
+    description: "Descrizione dell'opera 7",
+    position: { x: 7, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC00184.jpg"
+  },
+  {
+    name: "Opere d'arte 8",
+    description: "Descrizione dell'opera 8",
+    position: { x: 8, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC00256-2.jpg"
+  },
+  {
+    name: "Opere d'arte 9",
+    description: "Descrizione dell'opera 9",
+    position: { x: 9, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC00310.jpg"
+  },
+  {
+    name: "Opere d'arte 10",
+    description: "Descrizione dell'opera 10",
+    position: { x: 10, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC00402.jpg"
+  },
+  {
+    name: "Opere d'arte 11",
+    description: "Descrizione dell'opera 11",
+    position: { x: 11, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC00410.jpg"
+  },
+  {
+    name: "Opere d'arte 12",
+    description: "Descrizione dell'opera 12",
+    position: { x: 12, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC00556.jpg"
+  },
+  {
+    name: "Opere d'arte 13",
+    description: "Descrizione dell'opera 13",
+    position: { x: 13, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC00619.jpg"
+  },
+  {
+    name: "Opere d'arte 14",
+    description: "Descrizione dell'opera 14",
+    position: { x: 14, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC00675-Edit.jpg"
+  },
+  {
+    name: "Opere d'arte 15",
+    description: "Descrizione dell'opera 15",
+    position: { x: 15, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC01045.jpg"
+  },
+  {
+    name: "Opere d'arte 16",
+    description: "Descrizione dell'opera 16",
+    position: { x: 16, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC01508.jpg"
+  },
+  {
+    name: "Opere d'arte 17",
+    description: "Descrizione dell'opera 17",
+    position: { x: 17, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC01600-Enhanced.jpg"
+  },
+  {
+    name: "Opere d'arte 18",
+    description: "Descrizione dell'opera 18",
+    position: { x: -8.739999999999778, y: 1.500000000000002, z: 3.6950000000000425 },
+    rotation: { x: -8.109999999999971, y: 1.5699999999999934, z: 89.79499999999987 },
+    size: 2.51, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC01894-2.jpg"
+  },
+  {
+    name: "Opere d'arte 19",
+    description: "Descrizione dell'opera 19",
+    position: { x: -8.739999999999778, y: 1.500000000000002, z: 0.06499999999989829 },
+    rotation: { x: -8.109999999999971, y: 1.5699999999999934, z: 89.79499999999987 },
+    size: 2.51, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC02631.jpg"
+  },
+  {
+    name: "Opere d'arte 20",
+    description: "Descrizione dell'opera 20",
+    position: { x: 9.134999999999804, y: 4.699999999999943, z: -1.815000000000004 },
+    rotation: {
+      x: -0.014999999999999925,
+      y: -1.569999999999999,
+      z: 87.94999999999895
+    },
+    size: 1.674, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC02687.jpg"
+  },
+  {
+    name: "Opere d'arte 21",
+    description: "Descrizione dell'opera 21",
+    position: { x: -7.284999999999908, y: 1.7700000000000518, z: -11.95499999999987 },
+    rotation: { x: 6.2849999999999016, y: 3.1400000000000365, z: 81.67999999999611 },
+    size: 1.69, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC07915.jpg"
+  },
+  {
+    name: "Opere d'arte 22",
+    description: "Descrizione dell'opera 22",
+    position: { x: 22, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC07940.jpg"
+  },
+  {
+    name: "Opere d'arte 23",
+    description: "Descrizione dell'opera 23",
+    position: { x: 23, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC08093.jpg"
+  },
+  {
+    name: "Opere d'arte 24",
+    description: "Descrizione dell'opera 24",
+    position: { x: 24, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC08479.jpg"
+  },
+  {
+    name: "Opere d'arte 25",
+    description: "Descrizione dell'opera 25",
+    position: { x: 25, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC08641.jpg"
+  },
+  {
+    name: "Opere d'arte 26",
+    description: "Descrizione dell'opera 26",
+    position: { x: 26, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC08688.jpg"
+  },
+  {
+    name: "Opere d'arte 27",
+    description: "Descrizione dell'opera 27",
+    position: { x: -8.739999999999778, y: 1.500000000000002, z: -3.555000000000115 },
+    rotation: { x: -8.109999999999971, y: 1.5699999999999934, z: 89.79499999999987 },
+    size: 2.51, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC08782.jpg"
+  },
+  {
+    name: "Opere d'arte 28",
+    description: "Descrizione dell'opera 28",
+    position: { x: 28, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC08787.jpg"
+  },
+  {
+    name: "Opere d'arte 29",
+    description: "Descrizione dell'opera 29",
+    position: { x: 29, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC08872.jpg"
+  },
+  {
+    name: "Opere d'arte 30",
+    description: "Descrizione dell'opera 30",
+    position: { x: 30, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC09047.jpg"
+  },
+  {
+    name: "Opere d'arte 31",
+    description: "Descrizione dell'opera 31",
+    position: { x: 31, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC09077.jpg"
+  },
+  {
+    name: "Opere d'arte 32",
+    description: "Descrizione dell'opera 32",
+    position: { x: 32, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC09167.jpg"
+  },
+  {
+    name: "Opere d'arte 33",
+    description: "Descrizione dell'opera 33",
+    position: { x: -8.739999999999778, y: 1.500000000000002, z: -7.185000000000078 },
+    rotation: { x: -8.109999999999971, y: 1.5699999999999934, z: 89.79499999999987 },
+    size: 2.51, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC09594.jpg"
+  },
+  {
+    name: "Opere d'arte 34",
+    description: "Descrizione dell'opera 34",
+    position: { x: 34, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/DSC09646.jpg"
+  },
+  {
+    name: "Opere d'arte 35",
+    description: "Descrizione dell'opera 35",
+    position: { x: 35, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_00469-2.jpg"
+  },
+  {
+    name: "Opere d'arte 36",
+    description: "Descrizione dell'opera 36",
+    position: { x: 36, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_00494.jpg"
+  },
+  {
+    name: "Opere d'arte 37",
+    description: "Descrizione dell'opera 37",
+    position: { x: 9.134999999999804, y: 4.699999999999943, z: 1.8099999999998895 },
+    rotation: {
+      x: -0.014999999999999925,
+      y: -1.569999999999999,
+      z: 87.94999999999895
+    },
+    size: 1.674, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_02957.jpg"
+  },
+  {
+    name: "Opere d'arte 38",
+    description: "Descrizione dell'opera 38",
+    position: { x: 38, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_03043.jpg"
+  },
+  {
+    name: "Opere d'arte 39",
+    description: "Descrizione dell'opera 39",
+    position: { x: 39, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_03049.jpg"
+  },
+  {
+    name: "Opere d'arte 40",
+    description: "Descrizione dell'opera 40",
+    position: { x: 40, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_03465.jpg"
+  },
+  {
+    name: "Opere d'arte 41",
+    description: "Descrizione dell'opera 41",
+    position: { x: 41, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_04298.jpg"
+  },
+  {
+    name: "Opere d'arte 42",
+    description: "Descrizione dell'opera 42",
+    position: { x: 0.5650000000000241, y: 4.970000000000005, z: -11.939999999999905 },
+    rotation: { x: 6.2849999999999016, y: 3.145000000000036, z: 81.67999999999611 },
+    size: 11.09, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_04301-Pano-2.jpg"
+  },
+  {
+    name: "Opere d'arte 43",
+    description: "Descrizione dell'opera 43",
+    position: { x: 9.134999999999804, y: 4.699999999999943, z: 9.059999999999846 },
+    rotation: {
+      x: -0.014999999999999925,
+      y: -1.569999999999999,
+      z: 87.94999999999895
+    },
+    size: 1.674, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_04791.jpg"
+  },
+  {
+    name: "Opere d'arte 44",
+    description: "Descrizione dell'opera 44",
+    position: { x: 9.134999999999804, y: 4.699999999999943, z: -9.06999999999984 },
+    rotation: {
+      x: -0.014999999999999925,
+      y: -1.569999999999999,
+      z: 87.94999999999895
+    },
+    size: 1.674, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_05089.jpg"
+  },
+  {
+    name: "Opere d'arte 45",
+    description: "Descrizione dell'opera 45",
+    position: { x: 9.134999999999804, y: 4.699999999999943, z: 5.434999999999932 },
+    rotation: {
+      x: -0.014999999999999925,
+      y: -1.569999999999999,
+      z: 87.94999999999895
+    },
+    size: 1.674, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_05106.jpg"
+  },
+  {
+    name: "Opere d'arte 46",
+    description: "Descrizione dell'opera 46",
+    position: { x: 46, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_05265.jpg"
+  },
+  {
+    name: "Opere d'arte 47",
+    description: "Descrizione dell'opera 47",
+    position: { x: 47, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_05356.jpg"
+  },
+  {
+    name: "Opere d'arte 48",
+    description: "Descrizione dell'opera 48",
+    position: { x: 48, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_05713.jpg"
+  },
+  {
+    name: "Opere d'arte 49",
+    description: "Descrizione dell'opera 49",
+    position: { x: -8.739999999999778, y: 1.500000000000002, z: 7.3249999999999655 },
+    rotation: { x: -8.109999999999971, y: 1.5699999999999934, z: 89.79499999999987 },
+    size: 2.51, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_06140.jpg"
+  },
+  {
+    name: "Opere d'arte 50",
+    description: "Descrizione dell'opera 50",
+    position: { x: 50, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_07048.jpg"
+  },
+  {
+    name: "Opere d'arte 51",
+    description: "Descrizione dell'opera 51",
+    position: { x: 9.134999999999804, y: 4.699999999999943, z: -5.4449999999999354 },
+    rotation: {
+      x: -0.014999999999999925,
+      y: -1.569999999999999,
+      z: 87.94999999999895
+    },
+    size: 1.674, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_07235-Modifica-2.jpg"
+  },
+  {
+    name: "Opere d'arte 52",
+    description: "Descrizione dell'opera 52",
+    position: { x: 52, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_07597.jpg"
+  },
+  {
+    name: "Opere d'arte 53",
+    description: "Descrizione dell'opera 53",
+    position: { x: 53, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_07606.jpg"
+  },
+  {
+    name: "Opere d'arte 54",
+    description: "Descrizione dell'opera 54",
+    position: { x: 54, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_07845-HDR.jpg"
+  },
+  {
+    name: "Opere d'arte 55",
+    description: "Descrizione dell'opera 55",
+    position: { x: 55, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 90 },
+    size: 1.2, // Numero di scala per l'opera 1
+    url: "./textures/artworks/SD/EL_09782.jpg"
+  },
+]
+
+let selectedArtwork = 0;
+
+/* @ts-ignore */
+window.pictures = [];
 
 // Check if quality argument is passed in the url and set the texture quality accordingly
 const args = new URLSearchParams(location.search);
@@ -161,14 +635,20 @@ let playerOnFloor = false;
 //let mouseTime = 0;
 
 const keyStates = {} as { [key: string]: boolean };
+let ctrlKey = false;
+let shiftKey = false;
 
 if (!isMobile) {
   document.addEventListener('keydown', (event) => {
     keyStates[event.code] = true;
+    ctrlKey = event.ctrlKey;
+    shiftKey = event.shiftKey;
   });
 
   document.addEventListener('keyup', (event) => {
     keyStates[event.code] = false;
+    ctrlKey = event.ctrlKey;
+    shiftKey = event.shiftKey;
   });
 
   container.addEventListener('mousedown', () => {
@@ -331,6 +811,66 @@ function controls(deltaTime: number) {
       playerVelocity.y = 10;
     }
   }
+
+  if (TUNING) {
+    const precision = shiftKey ? 0.1 : 1;
+    const multiplier = 0.01 * precision;
+    if (keyStates['PageUp']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(0, multiplier, 0);
+    }
+    if (keyStates['PageDown']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(0, -multiplier, 0);
+    }
+    if (keyStates['ArrowLeft']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(-multiplier, 0, 0);
+    }
+    if (keyStates['ArrowRight']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(multiplier, 0, 0);
+    }
+    if (keyStates['ArrowUp']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(0, 0, -multiplier);
+    }
+    if (keyStates['ArrowDown']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(0, 0, multiplier);
+    }
+    const v = ctrlKey ? multiplier : -multiplier;
+    if (keyStates['KeyZ']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increaseRotation(0, v, 0);
+    }
+    if (keyStates['KeyX']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increaseRotation(v, 0, 0);
+    }
+    if (keyStates['KeyY']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increaseRotation(0, 0, v);
+    }
+    if (keyStates['NumpadAdd']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increaseSize(multiplier);
+    }
+    if (keyStates['NumpadSubtract']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increaseSize(-multiplier);
+    }
+
+    // Print the current position, rotation and size of the selected artwork
+    if (keyStates['KeyP']) {
+      /* @ts-ignore */
+      console.log(window.pictures[selectedArtwork].getPosition());
+      /* @ts-ignore */
+      console.log(window.pictures[selectedArtwork].getRotation());
+      /* @ts-ignore */
+      console.log(window.pictures[selectedArtwork].getSize());
+    }
+  }
 }
 
 if (isMobile) {
@@ -437,25 +977,14 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
       aa_sl = value;
       taaRenderPass.sampleLevel = aa_sl;
     });
-  gui.add({ "Antialiasing unbiased": aa_unbiased }, 'Antialiasing unbiased')
-    .onChange(function (value: boolean) {
-      aa_unbiased = value;
-      taaRenderPass.unbiased = aa_unbiased;
-    });
 
-
-  gui.add({ "Tone Mapping": selectedToneMapping }, 'Tone Mapping', Object.keys(toneMappingMethods))
-    .onChange(function (value: string) {
-      selectedToneMapping = value;
-      /* @ts-ignore */
-      renderer.toneMapping = toneMappingMethods[selectedToneMapping];
-    });
-
-  gui.add({ "Tone Mapping Exposure": toneMappingExp }, 'Tone Mapping Exposure')
-    .onChange(function (value: number) {
-      toneMappingExp = value;
-      renderer.toneMappingExposure = toneMappingExp;
-    });
+  if (TUNING) {
+    gui.add({ "Antialiasing unbiased": aa_unbiased }, 'Antialiasing unbiased')
+      .onChange(function (value: boolean) {
+        aa_unbiased = value;
+        taaRenderPass.unbiased = aa_unbiased;
+      });
+  }
 
   gui.add({ quality: textureQuality }, 'quality', ['LD', 'SD', 'MD', 'HD'])
     .onChange(function (value: string) {
@@ -463,6 +992,25 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
       location.replace(`?quality=${value}`)
     });
 
+  if (TUNING) {
+    gui.add({ "Tone Mapping": selectedToneMapping }, 'Tone Mapping', Object.keys(toneMappingMethods))
+      .onChange(function (value: string) {
+        selectedToneMapping = value;
+        /* @ts-ignore */
+        renderer.toneMapping = toneMappingMethods[selectedToneMapping];
+      });
+
+    gui.add({ "Tone Mapping Exposure": toneMappingExp }, 'Tone Mapping Exposure')
+      .onChange(function (value: number) {
+        toneMappingExp = value;
+        renderer.toneMappingExposure = toneMappingExp;
+      });
+    // Organizzazione mostra!!!
+    gui.add({ "Selected Artwork": selectedArtwork }, 'Selected Artwork', artworks.map((_a, i) => i))
+      .onChange(function (value: number) {
+        selectedArtwork = value;
+      });
+  }
   // Add plants to the scene
   /*const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
 
@@ -517,29 +1065,23 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
     scene.add(gltf.scene);
   })*/
 
-  const picture1 = {
-    picture: './textures/SD/DSC00675-Edit.jpg',
-    size: 3,
-    x: -2.06,
-    y: 1.5,
-    z: 2,
-    rotationX: 0,
-    rotationY: 1.58,
-    rotationZ: 0,
-    thickness: 0.1,
-    scene: scene,
-  } as ArtworkFrameOptions;
-  const p1 = new ArtworkFrame(picture1);
-
-  // for (var i = 0; i < 50; i++) {
-  //   picture1.x += 10
-  //   new ArtworkFrame(picture1);
-  // }
-
-
-  // expose Picture 1 to the console
-  /* @ts-ignore */
-  window.picture1 = p1;
+  for (var i = 0; i < artworks.length; i++) {
+    const picture = {
+      picture: artworks[i].url,
+      size: artworks[i].size,
+      x: artworks[i].position.x,
+      y: artworks[i].position.y,
+      z: artworks[i].position.z,
+      rotationX: artworks[i].rotation.x,
+      rotationY: artworks[i].rotation.y,
+      rotationZ: artworks[i].rotation.z,
+      thickness: 0.01,
+      scene: scene,
+    } as ArtworkFrameOptions;
+    const p = new ArtworkFrame(picture);
+    /* @ts-ignore */
+    window.pictures.push(p)
+  }
 });
 
 function teleportPlayerIfOob() {

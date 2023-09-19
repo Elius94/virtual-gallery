@@ -20,6 +20,60 @@
     cursor: pointer;
 }
 
+#artworkDetailsPanel {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    font-family: monospace;
+    text-align: center;
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 89;
+}
+
+#artworkDetailsPanel img {
+    width: auto;
+    height: auto;
+    max-height: 80vh;
+    padding: 10px;
+}
+
+/* must looks like a rounded white btn */
+#artworkDetailsPanelUrl {
+    background-color: #fff;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+    color: #000;
+    text-decoration: none;
+}
+
+#closeArtworkDetailsPanel {
+    position: absolute;
+    top: 50px;
+    right: 50px;
+    width: auto;
+    height: auto;
+    color: #000;
+    cursor: pointer;
+    font-size: 30px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+    text-decoration: none;
+}
+
 body {
     margin: 0;
     background-color: #000;
@@ -275,6 +329,12 @@ select {
     visibility: hidden;
     opacity: 0;
     transition: visibility 0s 0.5s, opacity 0.5s linear;
+}
+
+.show-05 {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.5s linear;
 }
 
 #canvas3d {

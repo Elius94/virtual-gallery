@@ -22,13 +22,13 @@ import { GUI } from './lil-gui.module.min.js';
 import "./app.css"
 import "./touch-pad.css"
 import TouchControls from './touch-controller/TouchControls.js';
-import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
+import ArtworkFrame, { ARTWORK_BASE_PATH, ArtworkFrameOptions } from './Artwork.js';
 import { ArtworksCollection } from './Artworks.js';
 
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-const TUNING = true;
+const TUNING = false;
 
 let textureQuality = isMobile ? "LD" : "HD";
 // check if in the url there is "debug" parameter
@@ -47,6 +47,7 @@ let toneMappingMethods = {
   ACESFilmicToneMapping: THREE.ACESFilmicToneMapping,
   CustomToneMapping: THREE.CustomToneMapping,
 }
+let cameraFocalLenght = 12;
 let selectedArtwork = 0;
 
 /* @ts-ignore */
@@ -86,7 +87,8 @@ const texture = txtLoader.load(
 
 scene.fog = new THREE.Fog(0x88ccee, 0, 170);
 
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.setFocalLength(cameraFocalLenght);
 camera.rotation.order = 'YXZ';
 
 const fillLight1 = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.2);
@@ -230,6 +232,27 @@ function startWelcomeTextCarosel(index: number) {
 
 const blocker = document.getElementById('blocker') as HTMLElement;
 const instructions = document.getElementById('instructions') as HTMLElement;
+const artworkDetailsPanel = document.getElementById('artworkDetailsPanel') as HTMLElement;
+const closeArtworkDetailsPanel = document.getElementById('closeArtworkDetailsPanel') as HTMLElement;
+let closingArtworkDetailsPanel = false;
+
+closeArtworkDetailsPanel.addEventListener('click', () => {
+  closingArtworkDetailsPanel = true;
+
+  setTimeout(() => {
+    closingArtworkDetailsPanel = false;
+  }, 500);
+
+  artworkDetailsPanel.classList.remove('show-05');
+  artworkDetailsPanel.classList.add('hidden-05');
+  
+  // restore pointer lock
+  hideInstructions();
+  document.body.requestPointerLock();
+});
+
+const distanzaMassima = 4; // Soglia di distanza per attivare il cursore
+let highlightedArtwork: ArtworkFrame | undefined = undefined;
 
 if (!isMobile) {
   instructions.addEventListener('click', function () {
@@ -239,6 +262,7 @@ if (!isMobile) {
 }
 
 function hideInstructions() {
+  blocker.classList.remove('show-05');
   blocker.classList.add('hidden-05');
   /*instructions.style.display = 'none';
   blocker.style.display = 'none';*/
@@ -246,6 +270,7 @@ function hideInstructions() {
 
 function showInstructions() {
   blocker.classList.remove('hidden-05');
+  blocker.classList.add('show-05');
   /*instructions.style.display = 'block';
   blocker.style.display = 'block';*/
 }
@@ -266,6 +291,92 @@ function onWindowResize() {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   composer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// Event Listener per il click del mouse
+document.addEventListener('click', onMouseClick, false);
+
+// Funzione per gestire il click del mouse
+function onMouseClick(_event: any) {
+  if (highlightedArtwork && artworkDetailsPanel.classList.contains('hidden-05') && !closingArtworkDetailsPanel) {
+    // disable pointer lock
+    document.exitPointerLock();
+
+    console.log('click on artwork', highlightedArtwork);
+    const img = document.getElementById('artworkDetailsPanelImage') as HTMLImageElement;
+    img.src = `${ARTWORK_BASE_PATH}HD/${highlightedArtwork?.picture}`;
+    if (highlightedArtwork?.redirectUrl) {
+      // add redirect url to the image click
+      img.addEventListener('click', () => {
+        window.open(highlightedArtwork?.redirectUrl, '_blank');
+      });
+      const redirectUrl = document.getElementById('artworkDetailsPanelUrl') as HTMLAnchorElement;
+      redirectUrl.href = highlightedArtwork.redirectUrl || '';
+    }
+    const title = document.getElementById('artworkDetailsPanelTitle') as HTMLElement;
+    title.innerText = highlightedArtwork.title || '';
+    const description = document.getElementById('artworkDetailsPanelDescription') as HTMLElement;
+    description.innerText = highlightedArtwork.description || '';
+    const author = document.getElementById('artworkDetailsPanelAuthor') as HTMLElement;
+    author.innerText = highlightedArtwork.author || '';
+    const year = document.getElementById('artworkDetailsPanelYear') as HTMLElement;
+    year.innerText = highlightedArtwork.year ? highlightedArtwork.year.toString() : '';
+    artworkDetailsPanel.classList.remove('hidden-05');
+    artworkDetailsPanel.classList.add('show-05');
+  }
+}
+
+// Funzione per calcolare il Cono di Selezione
+function calculateSelectionCone() {
+  // Ottieni la posizione della camera
+  const cameraPosition = camera.position.clone();
+
+  // Ottieni la direzione in cui guarda la camera (vettore di direzione)
+  const cameraDirection = getForwardVector(); // Assumi che getForwardVector() restituisca il vettore di direzione della camera
+
+  // Calcola un punto nel mondo 3D in cui inizia il cono di selezione
+  const selectionStartPoint = cameraPosition.clone();
+
+  // Calcola un punto nel mondo 3D in cui termina il cono di selezione
+  const selectionEndPoint = cameraPosition.clone().add(cameraDirection.multiplyScalar(distanzaMassima)); // Modifica "distanzaMassima" con la distanza massima desiderata
+
+  // Calcola la direzione del cono
+  const coneDirection = cameraDirection.clone().normalize();
+
+  // Calcola l'angolo del cono (ad esempio, 45 gradi)
+  const coneAngle = Math.PI / 4; // Modifica l'angolo come desiderato
+
+  // Restituisci il cono di selezione come oggetto contenente i punti di inizio, fine, direzione e angolo
+  return {
+    start: selectionStartPoint,
+    end: selectionEndPoint,
+    direction: coneDirection,
+    angle: coneAngle
+  };
+}
+
+// Funzione per verificare se un'opera d'arte è all'interno del Cono di Selezione
+function isArtworkInSelectionCone(artwork: ArtworkFrame, selectionCone: any) {
+  // Ottieni la posizione dell'opera d'arte nel mondo 3D
+  const artworkPosition = artwork.getPosition(); // Modifica questa funzione in base al tuo sistema di posizionamento delle opere d'arte
+
+  // Calcola il vettore dalla posizione della camera all'opera d'arte
+  const vectorToArtwork = artworkPosition.clone().sub(selectionCone.start);
+
+  // Calcola l'angolo tra il vettore e la direzione del cono
+  const angleToArtwork = selectionCone.direction.angleTo(vectorToArtwork);
+
+  // Verifica se l'opera d'arte è all'interno del cono di selezione
+  return angleToArtwork <= selectionCone.angle / 2 && vectorToArtwork.length() < 3;
+}
+
+// Funzione per gestire le Opere d'Arte all'Interno del Cono di Selezione
+function handleArtworksInSelectionCone(artworksInSelectionCone: ArtworkFrame[]) {
+  // Itera attraverso le opere d'arte all'interno del Cono di Selezione
+  if (artworksInSelectionCone.length > 0)
+    return artworksInSelectionCone[0].highlight();
+  else
+    return undefined;
 }
 
 function playerCollisions() {
@@ -505,6 +616,11 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
         container.removeChild(stats.domElement);
       }
     });
+  gui.add({ "Camera Focal Lenght": cameraFocalLenght }, 'Camera Focal Lenght', [8, 10, 12, 14, 20, 28, 35, 50, 70, 100, 135, 200])
+    .onChange(function (value: number) {
+      cameraFocalLenght = value;
+      camera.setFocalLength(cameraFocalLenght);
+    });
   gui.add({ "Antialiasing Level": aa_sl }, 'Antialiasing Level', [1, 2, 3, 4])
     .onChange(function (value: number) {
       aa_sl = value;
@@ -601,6 +717,7 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
   for (var i = 0; i < ArtworksCollection.length; i++) {
     const picture = {
       picture: ArtworksCollection[i].url,
+      quality: "SD",
       size: ArtworksCollection[i].size,
       x: ArtworksCollection[i].position.x,
       y: ArtworksCollection[i].position.y,
@@ -610,10 +727,15 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
       rotationZ: ArtworksCollection[i].rotation.z,
       thickness: 0.01,
       scene: scene,
+      worldOctree: worldOctree,
+      title: ArtworksCollection[i].name,
+      description: ArtworksCollection[i].description,
+      year: ArtworksCollection[i].year,
+      author: ArtworksCollection[i].author,
+      redirectUrl: ArtworksCollection[i].redirectUrl
     } as ArtworkFrameOptions;
-    const p = new ArtworkFrame(picture);
     /* @ts-ignore */
-    window.pictures.push(p)
+    window.pictures.push(new ArtworkFrame(picture))
   }
 });
 
@@ -628,6 +750,16 @@ function teleportPlayerIfOob() {
 }
 
 function animate() {
+  // Calcola il Cono di Visione o Rettangolo di Selezione
+  const selectionCone = calculateSelectionCone();
+
+  // Verifica quali Artwork sono all'interno dell'Area di Selezione
+  /* @ts-ignore */
+  const artworksInSelectionCone = window.pictures.filter(artwork => isArtworkInSelectionCone(artwork, selectionCone));
+
+  // Gestisci le Opere d'Arte all'Interno del cono di Selezione
+  highlightedArtwork = handleArtworksInSelectionCone(artworksInSelectionCone);
+
   const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME;
   // we look for collisions in substeps to mitigate the risk of
   // an object traversing another too quickly for detection.

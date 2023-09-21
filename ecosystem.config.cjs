@@ -17,9 +17,9 @@ module.exports = {
             repo: 'https://github.com/Elius94/virtual-gallery',
             path: '/opt/web/srv.eliusoutdoor.com/virtual-gallery',
             'pre-deploy-local': '',
-            'pre-deploy': 'git fetch --all && printenv',
+            'pre-deploy': 'git fetch --all && source /root/.bashrc && printenv',
             'post-deploy':
-                'source ~/.bashrc && npm install && npm run build && pm2 reload ecosystem.config.js --env production && pm2 save',
+                'npm install && npm run build && pm2 reload ecosystem.config.js --env production && pm2 save',
             env: {
                 NODE_ENV: 'production',
             },

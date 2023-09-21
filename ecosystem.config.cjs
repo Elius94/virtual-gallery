@@ -18,7 +18,7 @@ module.exports = {
             path: '/opt/web/srv.eliusoutdoor.com/virtual-gallery',
             'pre-deploy': 'git fetch --all',
             'post-deploy':
-                'source /root/.bashrc && npm install && npm run build && pm2 reload ecosystem.config.cjs && pm2 save ',
+                'source /root/.bashrc && npm install && npm run build && pm2 reload immersive && pm2 save ',
             env: {
 
             },

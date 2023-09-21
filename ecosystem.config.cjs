@@ -16,7 +16,7 @@ module.exports = {
             ref: 'origin/main',
             repo: 'https://github.com/Elius94/virtual-gallery',
             path: '/opt/web/srv.eliusoutdoor.com/virtual-gallery',
-            'pre-deploy': 'git fetch --all && npm install && npm run build',
+            'pre-deploy': 'git fetch --all && npm install && node ../esbuild.js',
             'post-deploy':
                 'pm2 reload ecosystem.config.js --env production && pm2 save',
             env: {

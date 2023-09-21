@@ -19,7 +19,7 @@ module.exports = {
             'pre-deploy-local': '',
             'pre-deploy': 'git fetch --all',
             'post-deploy':
-                'export PATH=/usr/local/share/npm/bin:$PATH && npm install && npm run build && pm2 reload ecosystem.config.js --env production && pm2 save',
+                'npm install && npm run build && pm2 reload ecosystem.config.js --env production && pm2 save',
             env: {
                 NODE_ENV: 'production',
             },

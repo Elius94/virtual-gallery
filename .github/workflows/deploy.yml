@@ -8,31 +8,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      #
-      # ... your other steps, such as running tests, etc...
-      #
-      - name: Set up SSH
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_PRIVATE_KEY" > ./deploy.key
-          sudo chmod 600 ./deploy.key
-          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-        shell: bash
-        env:
-          SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
-          SSH_KNOWN_HOSTS: ${{secrets.SSH_KNOWN_HOSTS}}
-
-      # (optional - only needed if your config uses environment variables)
-      - name: Create env file
-        run: |
-          touch .env
-          # echo PATH=/root/.nvm/versions/node/v20.7.0/bin/npm:$PATH >> .env
-
-      - name: Install PM2
-        run: npm i -g pm2
-
       - name: Deploy
-        # run: env $(cat .env | grep -v \"#\" | xargs) pm2 deploy ecosystem.config.cjs production
-        run: pm2 deploy ecosystem.config.cjs production
-        # Or alternately, put this deploy script in your package.json's scripts and run it using yarn/npm:
-        # run: yarn deploy
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ secrets.CWD }}
+            git checkout main
+            git pull
+            npm install
+            npm run build
+            pm2 restart virtual-gallery
+            pm2 save
+

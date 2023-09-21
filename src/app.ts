@@ -12,7 +12,9 @@ import { Capsule } from 'three/examples/jsm/math/Capsule.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
+import { TAARenderPass } from "three/examples/jsm/postprocessing/TAARenderPass.js";
 
 import { GUI } from './lil-gui.module.min.js';
 //import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
@@ -20,11 +22,36 @@ import { GUI } from './lil-gui.module.min.js';
 import "./app.css"
 import "./touch-pad.css"
 import TouchControls from './touch-controller/TouchControls.js';
+import ArtworkFrame, { ARTWORK_BASE_PATH, ArtworkFrameOptions } from './Artwork.js';
+import { ArtworksCollection } from './Artworks.js';
 
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+const TUNING = false;
+
 let textureQuality = isMobile ? "LD" : "HD";
+// check if in the url there is "debug" parameter
+let debug = window.location.search.indexOf('debug') !== -1;
+let aa_sl = 1;
+let aa_unbiased = false;
+let stats: any = null;
+let selectedShader = GammaCorrectionShader
+let selectedToneMapping = "ACESFilmicToneMapping";
+let toneMappingExp = 0.85;
+let toneMappingMethods = {
+  sRGBEncoding: THREE.sRGBEncoding,
+  LinearToneMapping: THREE.LinearToneMapping,
+  ReinhardToneMapping: THREE.ReinhardToneMapping,
+  CineonToneMapping: THREE.CineonToneMapping,
+  ACESFilmicToneMapping: THREE.ACESFilmicToneMapping,
+  CustomToneMapping: THREE.CustomToneMapping,
+}
+let cameraFocalLenght = 12;
+let selectedArtwork = 0;
+
+/* @ts-ignore */
+window.pictures = [];
 
 // Check if quality argument is passed in the url and set the texture quality accordingly
 const args = new URLSearchParams(location.search);
@@ -58,10 +85,10 @@ const texture = txtLoader.load(
     scene.background = rt.texture;
   });
 
-scene.background = texture;
 scene.fog = new THREE.Fog(0x88ccee, 0, 170);
 
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.setFocalLength(cameraFocalLenght);
 camera.rotation.order = 'YXZ';
 
 const fillLight1 = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.2);
@@ -91,9 +118,15 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
 //renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1;
+// renderer.toneMapping = THREE.LinearToneMapping;
+// renderer.toneMapping = THREE.ReinhardToneMapping;
+// renderer.toneMapping = THREE.CineonToneMapping;
+// renderer.toneMapping = THREE.ACESFilmicToneMapping;
+// renderer.toneMapping = THREE.CustomToneMapping;
+
 /* @ts-ignore */
+renderer.toneMapping = toneMappingMethods[selectedToneMapping];
+renderer.toneMappingExposure = toneMappingExp;
 //renderer.gammaFactor = 2.0;
 container.appendChild(renderer.domElement);
 
@@ -107,14 +140,20 @@ const target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight
 });
 
 const composer = new EffectComposer(renderer, target);
+
+const taaRenderPass = new TAARenderPass(scene, camera, 0xffffff, 1);
+taaRenderPass.unbiased = aa_unbiased;
+taaRenderPass.sampleLevel = aa_sl;
+composer.addPass(taaRenderPass); // default
+
+const rp = new RenderPass(scene, camera);
+rp.enabled = false;
+composer.addPass(rp);
+composer.addPass(new ShaderPass(selectedShader));
+
 composer.setPixelRatio(window.devicePixelRatio);
 composer.setSize(window.innerWidth, window.innerHeight)
-composer.addPass(new RenderPass(scene, camera));
-composer.addPass(new ShaderPass(GammaCorrectionShader));
 
-// check if in the url there is "debug" parameter
-let debug = window.location.search.indexOf('debug') !== -1;
-let stats: any = null;
 
 const GRAVITY = 30;
 
@@ -131,14 +170,20 @@ let playerOnFloor = false;
 //let mouseTime = 0;
 
 const keyStates = {} as { [key: string]: boolean };
+let ctrlKey = false;
+let shiftKey = false;
 
 if (!isMobile) {
   document.addEventListener('keydown', (event) => {
     keyStates[event.code] = true;
+    ctrlKey = event.ctrlKey;
+    shiftKey = event.shiftKey;
   });
 
   document.addEventListener('keyup', (event) => {
     keyStates[event.code] = false;
+    ctrlKey = event.ctrlKey;
+    shiftKey = event.shiftKey;
   });
 
   container.addEventListener('mousedown', () => {
@@ -187,6 +232,27 @@ function startWelcomeTextCarosel(index: number) {
 
 const blocker = document.getElementById('blocker') as HTMLElement;
 const instructions = document.getElementById('instructions') as HTMLElement;
+const artworkDetailsPanel = document.getElementById('artworkDetailsPanel') as HTMLElement;
+const closeArtworkDetailsPanel = document.getElementById('closeArtworkDetailsPanel') as HTMLElement;
+let closingArtworkDetailsPanel = false;
+
+closeArtworkDetailsPanel.addEventListener('click', () => {
+  closingArtworkDetailsPanel = true;
+
+  setTimeout(() => {
+    closingArtworkDetailsPanel = false;
+  }, 500);
+
+  artworkDetailsPanel.classList.remove('show-05');
+  artworkDetailsPanel.classList.add('hidden-05');
+  
+  // restore pointer lock
+  hideInstructions();
+  document.body.requestPointerLock();
+});
+
+const distanzaMassima = 4; // Soglia di distanza per attivare il cursore
+let highlightedArtwork: ArtworkFrame | undefined = undefined;
 
 if (!isMobile) {
   instructions.addEventListener('click', function () {
@@ -196,6 +262,7 @@ if (!isMobile) {
 }
 
 function hideInstructions() {
+  blocker.classList.remove('show-05');
   blocker.classList.add('hidden-05');
   /*instructions.style.display = 'none';
   blocker.style.display = 'none';*/
@@ -203,6 +270,7 @@ function hideInstructions() {
 
 function showInstructions() {
   blocker.classList.remove('hidden-05');
+  blocker.classList.add('show-05');
   /*instructions.style.display = 'block';
   blocker.style.display = 'block';*/
 }
@@ -223,6 +291,92 @@ function onWindowResize() {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   composer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// Event Listener per il click del mouse
+document.addEventListener('click', onMouseClick, false);
+
+// Funzione per gestire il click del mouse
+function onMouseClick(_event: any) {
+  if (highlightedArtwork && artworkDetailsPanel.classList.contains('hidden-05') && !closingArtworkDetailsPanel) {
+    // disable pointer lock
+    document.exitPointerLock();
+
+    console.log('click on artwork', highlightedArtwork);
+    const img = document.getElementById('artworkDetailsPanelImage') as HTMLImageElement;
+    img.src = `${ARTWORK_BASE_PATH}HD/${highlightedArtwork?.picture}`;
+    if (highlightedArtwork?.redirectUrl) {
+      // add redirect url to the image click
+      img.addEventListener('click', () => {
+        window.open(highlightedArtwork?.redirectUrl, '_blank');
+      });
+      const redirectUrl = document.getElementById('artworkDetailsPanelUrl') as HTMLAnchorElement;
+      redirectUrl.href = highlightedArtwork.redirectUrl || '';
+    }
+    const title = document.getElementById('artworkDetailsPanelTitle') as HTMLElement;
+    title.innerText = highlightedArtwork.title || '';
+    const description = document.getElementById('artworkDetailsPanelDescription') as HTMLElement;
+    description.innerText = highlightedArtwork.description || '';
+    const author = document.getElementById('artworkDetailsPanelAuthor') as HTMLElement;
+    author.innerText = highlightedArtwork.author || '';
+    const year = document.getElementById('artworkDetailsPanelYear') as HTMLElement;
+    year.innerText = highlightedArtwork.year ? highlightedArtwork.year.toString() : '';
+    artworkDetailsPanel.classList.remove('hidden-05');
+    artworkDetailsPanel.classList.add('show-05');
+  }
+}
+
+// Funzione per calcolare il Cono di Selezione
+function calculateSelectionCone() {
+  // Ottieni la posizione della camera
+  const cameraPosition = camera.position.clone();
+
+  // Ottieni la direzione in cui guarda la camera (vettore di direzione)
+  const cameraDirection = getForwardVector(); // Assumi che getForwardVector() restituisca il vettore di direzione della camera
+
+  // Calcola un punto nel mondo 3D in cui inizia il cono di selezione
+  const selectionStartPoint = cameraPosition.clone();
+
+  // Calcola un punto nel mondo 3D in cui termina il cono di selezione
+  const selectionEndPoint = cameraPosition.clone().add(cameraDirection.multiplyScalar(distanzaMassima)); // Modifica "distanzaMassima" con la distanza massima desiderata
+
+  // Calcola la direzione del cono
+  const coneDirection = cameraDirection.clone().normalize();
+
+  // Calcola l'angolo del cono (ad esempio, 45 gradi)
+  const coneAngle = Math.PI / 4; // Modifica l'angolo come desiderato
+
+  // Restituisci il cono di selezione come oggetto contenente i punti di inizio, fine, direzione e angolo
+  return {
+    start: selectionStartPoint,
+    end: selectionEndPoint,
+    direction: coneDirection,
+    angle: coneAngle
+  };
+}
+
+// Funzione per verificare se un'opera d'arte è all'interno del Cono di Selezione
+function isArtworkInSelectionCone(artwork: ArtworkFrame, selectionCone: any) {
+  // Ottieni la posizione dell'opera d'arte nel mondo 3D
+  const artworkPosition = artwork.getPosition(); // Modifica questa funzione in base al tuo sistema di posizionamento delle opere d'arte
+
+  // Calcola il vettore dalla posizione della camera all'opera d'arte
+  const vectorToArtwork = artworkPosition.clone().sub(selectionCone.start);
+
+  // Calcola l'angolo tra il vettore e la direzione del cono
+  const angleToArtwork = selectionCone.direction.angleTo(vectorToArtwork);
+
+  // Verifica se l'opera d'arte è all'interno del cono di selezione
+  return angleToArtwork <= selectionCone.angle / 2 && vectorToArtwork.length() < 3;
+}
+
+// Funzione per gestire le Opere d'Arte all'Interno del Cono di Selezione
+function handleArtworksInSelectionCone(artworksInSelectionCone: ArtworkFrame[]) {
+  // Itera attraverso le opere d'arte all'interno del Cono di Selezione
+  if (artworksInSelectionCone.length > 0)
+    return artworksInSelectionCone[0].highlight();
+  else
+    return undefined;
 }
 
 function playerCollisions() {
@@ -299,6 +453,66 @@ function controls(deltaTime: number) {
   if (playerOnFloor) {
     if (keyStates['Space']) {
       playerVelocity.y = 10;
+    }
+  }
+
+  if (TUNING) {
+    const precision = shiftKey ? 0.1 : 1;
+    const multiplier = 0.01 * precision;
+    if (keyStates['PageUp']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(0, multiplier, 0);
+    }
+    if (keyStates['PageDown']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(0, -multiplier, 0);
+    }
+    if (keyStates['ArrowLeft']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(-multiplier, 0, 0);
+    }
+    if (keyStates['ArrowRight']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(multiplier, 0, 0);
+    }
+    if (keyStates['ArrowUp']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(0, 0, -multiplier);
+    }
+    if (keyStates['ArrowDown']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increasePosition(0, 0, multiplier);
+    }
+    const v = ctrlKey ? multiplier : -multiplier;
+    if (keyStates['KeyZ']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increaseRotation(0, v, 0);
+    }
+    if (keyStates['KeyX']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increaseRotation(v, 0, 0);
+    }
+    if (keyStates['KeyY']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increaseRotation(0, 0, v);
+    }
+    if (keyStates['NumpadAdd']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increaseSize(multiplier);
+    }
+    if (keyStates['NumpadSubtract']) {
+      /* @ts-ignore */
+      window.pictures[selectedArtwork].increaseSize(-multiplier);
+    }
+
+    // Print the current position, rotation and size of the selected artwork
+    if (keyStates['KeyP']) {
+      /* @ts-ignore */
+      console.log(window.pictures[selectedArtwork].getPosition());
+      /* @ts-ignore */
+      console.log(window.pictures[selectedArtwork].getRotation());
+      /* @ts-ignore */
+      console.log(window.pictures[selectedArtwork].getSize());
     }
   }
 }
@@ -402,12 +616,50 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
         container.removeChild(stats.domElement);
       }
     });
+  gui.add({ "Camera Focal Lenght": cameraFocalLenght }, 'Camera Focal Lenght', [8, 10, 12, 14, 20, 28, 35, 50, 70, 100, 135, 200])
+    .onChange(function (value: number) {
+      cameraFocalLenght = value;
+      camera.setFocalLength(cameraFocalLenght);
+    });
+  gui.add({ "Antialiasing Level": aa_sl }, 'Antialiasing Level', [1, 2, 3, 4])
+    .onChange(function (value: number) {
+      aa_sl = value;
+      taaRenderPass.sampleLevel = aa_sl;
+    });
+
+  if (TUNING) {
+    gui.add({ "Antialiasing unbiased": aa_unbiased }, 'Antialiasing unbiased')
+      .onChange(function (value: boolean) {
+        aa_unbiased = value;
+        taaRenderPass.unbiased = aa_unbiased;
+      });
+  }
+
   gui.add({ quality: textureQuality }, 'quality', ['LD', 'SD', 'MD', 'HD'])
     .onChange(function (value: string) {
       textureQuality = value;
       location.replace(`?quality=${value}`)
     });
 
+  if (TUNING) {
+    gui.add({ "Tone Mapping": selectedToneMapping }, 'Tone Mapping', Object.keys(toneMappingMethods))
+      .onChange(function (value: string) {
+        selectedToneMapping = value;
+        /* @ts-ignore */
+        renderer.toneMapping = toneMappingMethods[selectedToneMapping];
+      });
+
+    gui.add({ "Tone Mapping Exposure": toneMappingExp }, 'Tone Mapping Exposure')
+      .onChange(function (value: number) {
+        toneMappingExp = value;
+        renderer.toneMappingExposure = toneMappingExp;
+      });
+    // Organizzazione mostra!!!
+    gui.add({ "Selected Artwork": selectedArtwork }, 'Selected Artwork', ArtworksCollection.map((_a, i) => i))
+      .onChange(function (value: number) {
+        selectedArtwork = value;
+      });
+  }
   // Add plants to the scene
   /*const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
 
@@ -462,23 +714,29 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
     scene.add(gltf.scene);
   })*/
 
-  /*const picture1 = {
-    picture: './textures/artworks/DSC09167.jpg',
-    size: 3,
-    x: -2.06,
-    y: 1.5,
-    z: 2,
-    rotationX: 0,
-    rotationY: 1.58,
-    rotationZ: 0,
-    thickness: 0.1,
-    scene: scene,
-  } as ArtworkFrameOptions;
-  const p1 = new ArtworkFrame(picture1);*/
-
-  // expose Picture 1 to the console
-  /* @ts-ignore */
-  //window.picture1 = p1;
+  for (var i = 0; i < ArtworksCollection.length; i++) {
+    const picture = {
+      picture: ArtworksCollection[i].url,
+      quality: "SD",
+      size: ArtworksCollection[i].size,
+      x: ArtworksCollection[i].position.x,
+      y: ArtworksCollection[i].position.y,
+      z: ArtworksCollection[i].position.z,
+      rotationX: ArtworksCollection[i].rotation.x,
+      rotationY: ArtworksCollection[i].rotation.y,
+      rotationZ: ArtworksCollection[i].rotation.z,
+      thickness: 0.01,
+      scene: scene,
+      worldOctree: worldOctree,
+      title: ArtworksCollection[i].name,
+      description: ArtworksCollection[i].description,
+      year: ArtworksCollection[i].year,
+      author: ArtworksCollection[i].author,
+      redirectUrl: ArtworksCollection[i].redirectUrl
+    } as ArtworkFrameOptions;
+    /* @ts-ignore */
+    window.pictures.push(new ArtworkFrame(picture))
+  }
 });
 
 function teleportPlayerIfOob() {
@@ -492,6 +750,16 @@ function teleportPlayerIfOob() {
 }
 
 function animate() {
+  // Calcola il Cono di Visione o Rettangolo di Selezione
+  const selectionCone = calculateSelectionCone();
+
+  // Verifica quali Artwork sono all'interno dell'Area di Selezione
+  /* @ts-ignore */
+  const artworksInSelectionCone = window.pictures.filter(artwork => isArtworkInSelectionCone(artwork, selectionCone));
+
+  // Gestisci le Opere d'Arte all'Interno del cono di Selezione
+  highlightedArtwork = handleArtworksInSelectionCone(artworksInSelectionCone);
+
   const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME;
   // we look for collisions in substeps to mitigate the risk of
   // an object traversing another too quickly for detection.

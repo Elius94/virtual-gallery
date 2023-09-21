@@ -19,7 +19,7 @@ module.exports = {
             'pre-deploy-local': '',
             'pre-deploy': 'git fetch --all',
             'post-deploy':
-                'export PATH=/root/.nvm/versions/node/v20.7.0/bin/npm:$PATH && npm install && npm run build && pm2 reload ecosystem.config.js --env production && pm2 save',
+                '/root/.nvm/versions/node/v20.7.0/bin/npm install && /root/.nvm/versions/node/v20.7.0/bin/npm run build && pm2 reload ecosystem.config.js --env production && pm2 save',
             env: {
                 NODE_ENV: 'production',
             },

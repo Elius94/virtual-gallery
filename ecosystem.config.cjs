@@ -22,6 +22,7 @@ module.exports = {
                 'npm install && npm run build && pm2 reload ecosystem.config.js --env production && pm2 save',
             env: {
                 NODE_ENV: 'production',
+                PATH: '/root/.nvm/versions/node/v20.7.0/bin/npm:$PATH',
             },
         },
     },

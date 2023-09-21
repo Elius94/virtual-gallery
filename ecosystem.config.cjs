@@ -18,7 +18,7 @@ module.exports = {
             path: '/opt/web/srv.eliusoutdoor.com/virtual-gallery',
             'pre-deploy': 'git fetch --all',
             'post-deploy':
-                'whereis node && source /root/.bashrc && npm install',
+                'source /root/.bashrc && npm install && node ./esbuild.js && npx seo-injector --build-dir public --pretty true --verbose true && pm2 reload ecosystem.config.cjs --env production',
             env: {
 
             },

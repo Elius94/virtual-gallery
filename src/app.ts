@@ -63,8 +63,6 @@ const txtLoader = new THREE.TextureLoader();
 const clock = new THREE.Clock();
 const scene = new THREE.Scene();
 
-//scene.background = new THREE.Color(0x88ccee);
-// Put a picture in the background
 //const texture = txtLoader.load('./textures/general/DSC02177-Modifica.jpg');
 // Add spotlights to the scene
 const spotLights = [

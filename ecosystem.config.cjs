@@ -3,7 +3,7 @@ module.exports = {
         name: "virtual-gallery",
         script: "serve",
         env: {
-            PM2_SERVE_PATH: '/opt/web/srv.eliusoutdoor.com/virtual-gallery/public',
+            PM2_SERVE_PATH: '/opt/web/srv.eliusoutdoor.com/virtual-gallery-short/public',
             PM2_SERVE_PORT: 3001,
             PM2_SERVE_SPA: 'true'
         }
@@ -13,9 +13,9 @@ module.exports = {
             user: 'root',
             host: '194.163.139.154',
             key: 'deploy.key',
-            ref: 'origin/main',
+            ref: 'origin/short',
             repo: 'https://github.com/Elius94/virtual-gallery',
-            path: '/opt/web/srv.eliusoutdoor.com/virtual-gallery',
+            path: '/opt/web/srv.eliusoutdoor.com/virtual-gallery-short',
             'pre-deploy': 'git fetch --all',
             'post-deploy':
                 'source /root/.bashrc && npm install && npm run build && pm2 reload immersive && pm2 save ',

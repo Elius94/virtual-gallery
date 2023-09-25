@@ -28,7 +28,7 @@ import { ArtworksCollection } from './Artworks.js';
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-const TUNING = false;
+const TUNING = true;
 
 let textureQuality = isMobile ? "LD" : "HD";
 // check if in the url there is "debug" parameter

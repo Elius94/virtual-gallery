@@ -44,8 +44,12 @@
 #artworkDetailsPanel img {
     width: auto;
     height: auto;
-    max-height: 80vh;
+    max-height: 63vh;
     padding: 10px;
+}
+
+#artworkDetailsPanel p {
+    line-height: 4px !important;
 }
 
 /* must looks like a rounded white btn */

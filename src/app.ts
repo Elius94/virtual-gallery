@@ -28,7 +28,7 @@ import { ArtworksCollection } from './Artworks.js';
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-const TUNING = true;
+const TUNING = false;
 
 let textureQuality = isMobile ? "LD" : "HD";
 // check if in the url there is "debug" parameter
@@ -38,7 +38,7 @@ let aa_unbiased = false;
 let stats: any = null;
 let selectedShader = GammaCorrectionShader
 let selectedToneMapping = "ACESFilmicToneMapping";
-let toneMappingExp = 0.85;
+let toneMappingExp = 0.80;
 let toneMappingMethods = {
   sRGBEncoding: THREE.sRGBEncoding,
   LinearToneMapping: THREE.LinearToneMapping,
@@ -564,15 +564,15 @@ const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('./loader/');
 loader.setDRACOLoader(dracoLoader);
 
-/*function loadModel(url: string) {
-  return new Promise((resolve, reject) => {
-    loader.load(url, (gltf) => {
-      resolve(gltf)
-    }, undefined, (error) => {
-      reject(error)
-    })
-  })
-}*/
+// function loadModel(url: string) {
+//   return new Promise((resolve, reject) => {
+//     loader.load(url, (gltf) => {
+//       resolve(gltf)
+//     }, undefined, (error) => {
+//       reject(error)
+//     })
+//   })
+// }
 
 startWelcomeTextCarosel(0);
 
@@ -659,13 +659,11 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
       });
   }
   // Add plants to the scene
-  /*const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
+  // const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
 
 
-  loadModel(plant3).then((gltf: any) => {
+  /*loadModel(plant3).then((gltf: any) => {
     //for (let i = 0; i < 2; i++) {
-      gltf.scene.scale.set(2, 2, 2);
-      gltf.scene.position.set(3, 0, 4);
       gltf.scene.rotation.set(0, 0, 0);
 
       mixers.push(new THREE.AnimationMixer(gltf.scene))
@@ -687,8 +685,8 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
       scene.add(gltf.scene);
       worldOctree.fromGraphNode(gltf.scene);
     //}
-  })*/
-  /*loadModel(plant3).then((gltf: any) => {
+  })
+  loadModel(plant3).then((gltf: any) => {
     gltf.scene.scale.set(2, 2, 2);
     gltf.scene.position.set(-13, 0, 4);
     gltf.scene.rotation.set(0, 0, 0);
@@ -723,7 +721,7 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
       rotationX: ArtworksCollection[i].rotation.x,
       rotationY: ArtworksCollection[i].rotation.y,
       rotationZ: ArtworksCollection[i].rotation.z,
-      thickness: 0.01,
+      thickness: 0.03,
       scene: scene,
       worldOctree: worldOctree,
       title: ArtworksCollection[i].name,

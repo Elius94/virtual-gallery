@@ -697,42 +697,42 @@
         },
         {
             "componentType" : 5126,
-            "count" : 3504,
+            "count" : 2514,
             "max" : [
-                -0.37727296352386475,
+                -0.3888866603374481,
                 5.985310077667236,
-                5.994364261627197
+                3.0269484519958496
             ],
             "min" : [
                 -4.7379608154296875,
-                -1.0084158182144165,
-                0.00753196282312274
+                2.9564201831817627,
+                2.9908764362335205
             ],
             "type" : "VEC3"
         },
         {
             "componentType" : 5126,
-            "count" : 3504,
+            "count" : 2514,
             "type" : "VEC2"
         },
         {
             "componentType" : 5126,
-            "count" : 3504,
+            "count" : 2514,
             "type" : "VEC2"
         },
         {
             "componentType" : 5126,
-            "count" : 3504,
+            "count" : 2514,
             "type" : "VEC3"
         },
         {
             "componentType" : 5126,
-            "count" : 3504,
+            "count" : 2514,
             "type" : "VEC4"
         },
         {
             "componentType" : 5123,
-            "count" : 3504,
+            "count" : 2514,
             "type" : "SCALAR"
         },
         {
@@ -845,18 +845,18 @@
         },
         {
             "buffer" : 0,
-            "byteLength" : 33998,
+            "byteLength" : 25623,
             "byteOffset" : 166204
         },
         {
             "buffer" : 0,
             "byteLength" : 205375,
-            "byteOffset" : 200204
+            "byteOffset" : 191828
         },
         {
             "buffer" : 0,
             "byteLength" : 292348,
-            "byteOffset" : 405580
+            "byteOffset" : 397204
         }
     ],
     "samplers" : [
@@ -867,7 +867,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 697928,
+            "byteLength" : 689552,
             "uri" : "Virtual Gallery.bin"
         }
     ]

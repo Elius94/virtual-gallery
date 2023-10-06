@@ -130,6 +130,10 @@ const buildOptions = {
                     console.log("\u001b[36mTypeScript declarations generated!\u001b[37m")
                     // copy src/index.html to public/index.html
                     fs.copyFileSync("src/index.html", "public/index.html")
+                    // copy src/icons to public/icons
+                    fs.mkdirSync("public/icons", { recursive: true })
+                    fs.copyFileSync("src/icons/favicon.ico", "public/favicon.ico")
+                    fs.cpSync("src/icons", "public/icons", { recursive: true })
                 })
             }
         },

@@ -48,8 +48,10 @@
     padding: 10px;
 }
 
-#artworkDetailsPanel p {
-    line-height: 4px !important;
+#artworkDetailsPanel p {    
+    line-height: 17px!important;
+    max-width: 60vw !important;
+    margin: 10px !important;
 }
 
 /* must looks like a rounded white btn */

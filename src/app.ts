@@ -31,6 +31,11 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const TUNING = false;
 
 let textureQuality = isMobile ? "LD" : "HD";
+// Check if quality argument is passed in the url and set the texture quality accordingly
+const args = new URLSearchParams(location.search);
+if (args.has('quality')) {
+  textureQuality = args.get('quality') || "HD";
+}
 // check if in the url there is "debug" parameter
 let debug = window.location.search.indexOf('debug') !== -1;
 let aa_sl = textureQuality === "HD" ? 4 : textureQuality === "MD" ? 2 : 1;
@@ -52,12 +57,6 @@ let selectedArtwork = 0;
 
 /* @ts-ignore */
 window.pictures = [];
-
-// Check if quality argument is passed in the url and set the texture quality accordingly
-const args = new URLSearchParams(location.search);
-if (args.has('quality')) {
-  textureQuality = args.get('quality') || "HD";
-}
 
 const txtLoader = new THREE.TextureLoader();
 const clock = new THREE.Clock();

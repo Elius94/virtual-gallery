@@ -536,7 +536,7 @@ if (isMobile) {
 }
 
 // Instantiate a loader
-let mixers: THREE.AnimationMixer[] = [];
+// let mixers: THREE.AnimationMixer[] = [];
 const manager = new THREE.LoadingManager();
 
 manager.onLoad = function () {
@@ -657,6 +657,9 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
         selectedArtwork = value;
       });
   }
+
+  gui.close();
+
   // Add plants to the scene
   // const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
 
@@ -769,6 +772,6 @@ function animate() {
   if (debug) stats.update();
   requestAnimationFrame(animate);
 
-  const delta = clock.getDelta();
-  mixers.forEach(mixer => mixer.update(delta))
+  // const delta = clock.getDelta();
+  // mixers.forEach(mixer => mixer.update(delta))
 }

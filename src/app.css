@@ -54,6 +54,21 @@
     margin: 10px !important;
 }
 
+@media screen and (max-width: 600px) {
+    #artworkDetailsPanel img {
+        width: auto !important;
+        height: auto !important;
+        max-height: 50vh !important;
+        padding: 10px !important;
+    }
+    #artworkDetailsPanel p {    
+        line-height: 17px!important;
+        max-width: 90vw !important;
+        margin: 8px !important;
+        font-size: 12px !important;
+    }
+}
+
 /* must looks like a rounded white btn */
 #artworkDetailsPanelUrl {
     background-color: #fff;
@@ -137,10 +152,10 @@ select {
 @media all and (max-width: 640px) {
     .lil-gui.root {
         right: auto;
-        top: auto;
+        top: 0;
         max-height: 50%;
         max-width: 80%;
-        bottom: 0;
+        bottom: auto;
         left: 0;
     }
 }

@@ -33,7 +33,7 @@ const TUNING = false;
 let textureQuality = isMobile ? "LD" : "HD";
 // check if in the url there is "debug" parameter
 let debug = window.location.search.indexOf('debug') !== -1;
-let aa_sl = 1;
+let aa_sl = textureQuality === "HD" ? 4 : textureQuality === "MD" ? 2 : 1;
 let aa_unbiased = false;
 let stats: any = null;
 let selectedShader = GammaCorrectionShader
@@ -713,7 +713,7 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
   for (var i = 0; i < ArtworksCollection.length; i++) {
     const picture = {
       picture: ArtworksCollection[i].url,
-      quality: "SD",
+      quality: textureQuality,
       size: ArtworksCollection[i].size,
       x: ArtworksCollection[i].position.x,
       y: ArtworksCollection[i].position.y,

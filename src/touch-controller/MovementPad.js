@@ -15,10 +15,12 @@ class MovementPad {
     constructor(container) {
         this.container = container
         this.padElement = document.createElement('div')
+        this.padElement.id = 'movement-pad'
         this.padElement.classList.add('movement-pad')
         this.region = document.createElement('div')
         this.region.classList.add('region')
         this.handle = document.createElement('div')
+        this.handle.id = 'movement-handle'
         this.handle.classList.add('handle')
         this.region.appendChild(this.handle)
         this.padElement.append(this.region)
@@ -29,55 +31,67 @@ class MovementPad {
         this.alignAndConfigPad(canvas)
 
         // events
-        window.addEventListener('resize', () => {this.alignAndConfigPad(canvas)})
+        window.addEventListener('resize', () => { this.alignAndConfigPad(canvas) })
 
         // Mouse events:
-        this.region.addEventListener('mousedown', (event) => {
+        this.padElement.addEventListener('mousedown', (event) => {
             this.mouseDown = true
             this.handle.style.opacity = 1.0
             this.update(event.pageX, event.pageY)
         })
 
-        document.addEventListener('mouseup', () => {
+        this.padElement.addEventListener('mouseup', () => {
             this.mouseDown = false
             this.resetHandlePosition()
         })
 
-        document.addEventListener('mousemove', (event) => {
+        this.padElement.addEventListener('mousemove', (event) => {
             if (!this.mouseDown)
                 return
             this.update(event.pageX, event.pageY)
         })
 
         //Touch events:
-        this.region.addEventListener('touchstart', (event) => {
-            this.mouseDown = true
-            this.handle.style.opacity = 1.0
-            this.update(
-                event.targetTouches[0].pageX,
-                event.targetTouches[0].pageY
-            )
-        })
-
-        let touchEnd = () => {
-            this.mouseDown = false
-            this.resetHandlePosition()
-        }
-        document.addEventListener('touchend', touchEnd)
-        document.addEventListener('touchcancel', touchEnd)
-
-        document.addEventListener('touchmove', (event) => {
-            if (!this.mouseDown)
-                return
-            this.update(event.touches[0].pageX, event.touches[0].pageY)
-        })
+        utils.set_handlers('movement-pad', this.touchHandler, this)
 
         this.resetHandlePosition()
     }
 
+    touchHandler(ev) {
+        switch (ev.type) {
+            case 'touchstart':
+                this.mouseDown = true
+                this.handle.style.opacity = 1.0
+
+                for (var i = 0; i < ev.touches.length; i++) {
+                    if (ev.touches[i].target.id == 'movement-handle' || ev.touches[i].target.parentElement.id == 'movement-pad') {
+                        this.update(ev.touches[i].pageX, ev.touches[i].pageY)
+                        return
+                    }
+                }
+                break;
+            case 'touchmove':
+                if (!this.mouseDown)
+                    return
+
+                for (var i = 0; i < ev.touches.length; i++) {
+                    if (ev.touches[i].target.id == 'movement-handle' || ev.touches[i].target.parentElement.id == 'movement-pad') {
+                        this.update(ev.touches[i].pageX, ev.touches[i].pageY)
+                        return
+                    }
+                }
+                break;
+            case 'touchcancel':
+            case 'touchend':
+                this.mouseDown = false
+                this.resetHandlePosition()
+                break;
+        }
+    }
+
     alignAndConfigPad(canvas) {
         this.padElement.style.top = canvas.height + this.container.getBoundingClientRect().top
-                                    - this.region.offsetHeight - 10 + 'px'
+            - this.region.offsetHeight - 10 + 'px'
         this.padElement.style.left = '20px'
 
         this.regionData.width = this.region.offsetWidth
@@ -119,9 +133,9 @@ class MovementPad {
         // event and data for handling camera movement
         let deltaX = this.regionData.centerX - parseInt(newLeft)
         let deltaY = this.regionData.centerY - parseInt(newTop)
-        // Normalize x,y between -2 to 2 range.
-        deltaX = -2 + (2 + 2) * (deltaX - (-this.regionData.radius)) / (this.regionData.radius - (-this.regionData.radius))
-        deltaY = -2 + (2 + 2) * (deltaY - (-this.regionData.radius)) / (this.regionData.radius - (-this.regionData.radius))
+        // Normalize x,y between -1 to 1 range.
+        deltaX = -1 + (1 + 1) * (deltaX - (-this.regionData.radius)) / (this.regionData.radius - (-this.regionData.radius))
+        deltaY = -1 + (1 + 1) * (deltaY - (-this.regionData.radius)) / (this.regionData.radius - (-this.regionData.radius))
         deltaX = Math.round(deltaX * 10) / 10
         deltaY = Math.round(deltaY * 10) / 10
         // console.log(deltaX, deltaY)
@@ -134,7 +148,7 @@ class MovementPad {
         }
 
         if (!this.mouseDown) {
-            const stopEvent = new Event('stopMove', {bubbles: false})
+            const stopEvent = new Event('stopMove', { bubbles: false })
             this.padElement.dispatchEvent(stopEvent)
             return
         }
@@ -145,7 +159,7 @@ class MovementPad {
 
         let moveEvent = new CustomEvent('move', {
             bubbles: false,
-            detail:{
+            detail: {
                 'deltaX': dx,
                 'deltaY': dy,
                 'middle': middle

@@ -39,6 +39,7 @@ if (args.has('quality')) {
 // check if in the url there is "debug" parameter
 let debug = window.location.search.indexOf('debug') !== -1;
 let aa_sl = textureQuality === "HD" ? 4 : textureQuality === "MD" ? 2 : 1;
+if (isMobile) aa_sl = 1;
 let aa_unbiased = false;
 let stats: any = null;
 let selectedShader = GammaCorrectionShader
@@ -110,7 +111,7 @@ scene.add(directionalLight);
 const container = document.getElementById('container-renderer') as HTMLElement;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setPixelRatio(isMobile ? window.devicePixelRatio : 1);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;

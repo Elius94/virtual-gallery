@@ -30,7 +30,7 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 const TUNING = false;
 
-let textureQuality = isMobile ? "LD" : "HD";
+let textureQuality = isMobile ? "MD" : "HD";
 // Check if quality argument is passed in the url and set the texture quality accordingly
 const args = new URLSearchParams(location.search);
 if (args.has('quality')) {

@@ -15,7 +15,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 import { TAARenderPass } from "three/examples/jsm/postprocessing/TAARenderPass.js";
-import { VRButton } from 'three/examples/jsm/webxr/VRButton';
+import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { GUI } from './lil-gui.module.min.js';
 //import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
 

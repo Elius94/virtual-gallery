@@ -774,8 +774,8 @@ function animate() {
   renderer.render(scene, camera);
   composer.render();
   if (debug) stats.update();
-  requestAnimationFrame(animate);
-  //renderer.setAnimationLoop(animate);
+  //requestAnimationFrame(animate);
+  renderer.setAnimationLoop(animate);
   // const delta = clock.getDelta();
   // mixers.forEach(mixer => mixer.update(delta))
 }

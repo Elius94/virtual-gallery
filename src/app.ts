@@ -15,7 +15,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 import { TAARenderPass } from "three/examples/jsm/postprocessing/TAARenderPass.js";
-
+import { VRButton } from 'three/examples/jsm/webxr/VRButton';
 import { GUI } from './lil-gui.module.min.js';
 //import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
 
@@ -125,8 +125,11 @@ renderer.shadowMap.type = THREE.VSMShadowMap;
 /* @ts-ignore */
 renderer.toneMapping = toneMappingMethods[selectedToneMapping];
 renderer.toneMappingExposure = toneMappingExp;
+renderer.xr.enabled = true;
 //renderer.gammaFactor = 2.0;
 container.appendChild(renderer.domElement);
+
+document.body.appendChild(VRButton.createButton(renderer));
 
 const target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
   minFilter: THREE.LinearFilter,
@@ -772,7 +775,7 @@ function animate() {
   composer.render();
   if (debug) stats.update();
   requestAnimationFrame(animate);
-
+  //renderer.setAnimationLoop(animate);
   // const delta = clock.getDelta();
   // mixers.forEach(mixer => mixer.update(delta))
 }

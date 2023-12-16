@@ -25,6 +25,7 @@ import TouchControls from './touch-controller/TouchControls.js';
 import ArtworkFrame, { ARTWORK_BASE_PATH, ArtworkFrameOptions } from './Artwork.js';
 import { ArtworksCollection } from './Artworks.js';
 import { GamePad } from './Gamepad.js';
+import { Bullets } from './Bullets.js';
 
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -178,6 +179,17 @@ let shiftKey = false;
 // Gamepad
 const gamepad = new GamePad();
 
+// Bullets
+const bullets = new Bullets({
+  scene,
+  camera,
+  playerCollider,
+  playerDirection,
+  playerVelocity,
+  mouseTime: 0,
+  gravity: GRAVITY
+});
+
 if (!isMobile) {
   document.addEventListener('keydown', (event) => {
     keyStates[event.code] = true;
@@ -194,6 +206,12 @@ if (!isMobile) {
   container.addEventListener('mousedown', () => {
     //console.log('requestPointerLock')
     document.body.requestPointerLock();
+    bullets.setMouseTime(performance.now());
+  });
+
+  document.addEventListener('mouseup', () => {
+    //console.log('exitPointerLock')
+    if ( document.pointerLockElement !== null) bullets.throwBall();
   });
 
   document.body.addEventListener('mousemove', (event) => {
@@ -461,16 +479,22 @@ function controls(deltaTime: number) {
   }
 
   if (gamepad.roll.x < -0.1 || gamepad.roll.x > 0.1) {
-    camera.rotation.x += gamepad.roll.x * speedDelta;
+    camera.rotation.x += gamepad.roll.x * 0.02;
   }
   if (gamepad.roll.y < -0.1 || gamepad.roll.y > 0.1) {
-    camera.rotation.y += gamepad.roll.y * speedDelta;
+    camera.rotation.y += gamepad.roll.y * 0.02;
   }
 
   if (playerOnFloor) {
-    if (keyStates['Space']) {
+    if (keyStates['Space'] || gamepad.buttons[0]) {
       playerVelocity.y = 10;
     }
+  }
+
+  // manage shooting
+  if (gamepad.buttons[1] && performance.now() - bullets.getMouseTime() > 100) {
+    bullets.setMouseTime(performance.now());
+    bullets.throwBall();
   }
 
   if (TUNING) {
@@ -786,8 +810,12 @@ function animate() {
   for (let i = 0; i < STEPS_PER_FRAME; i++) {
     controls(deltaTime);
     updatePlayer(deltaTime);
+    bullets.updateSpheres(deltaTime, worldOctree);
     teleportPlayerIfOob();
   }
+
+  // limit the camera to avoid upside down
+  camera.rotation.x = Math.max(- Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
 
   renderer.render(scene, camera);
   composer.render();

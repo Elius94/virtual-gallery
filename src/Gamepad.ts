@@ -5,6 +5,7 @@ class GamePad {
     ticking: boolean;
     pan: THREE.Vector3;
     roll: THREE.Vector3;
+    buttons: {[key: number]: boolean};
     RIGHT_AXIS_THRESHOLD: number;
     LEFT_AXIS_THRESHOLD: number;
     TRIGGER_AXIS_THRESHOLD: number;
@@ -23,6 +24,8 @@ class GamePad {
 
         this.pan = new THREE.Vector3(0, 0, 0);
         this.roll = new THREE.Vector3(0, 0, 0);
+
+        this.buttons = {0: false, 1: false, 2: false, 3: false, 4: false, 5: false};
 
         // Recommended deadzones for Xbox One controller
         this.RIGHT_AXIS_THRESHOLD = 7849 / 32767.0;
@@ -121,14 +124,22 @@ class GamePad {
         this.roll = new THREE.Vector3(0, 0, 0);
 
         if (this.gamepads[pad]) {
+            // process buttons
+            for (let i = 0; i < this.gamepads[pad].buttons.length; i++) {
+                if (this.gamepads[pad].buttons[i].pressed) {
+                    this.buttons[i] = true;
+                } else {
+                    this.buttons[i] = false;
+                }
+            }
 
             let panX = this.gamepads[pad].axes[0]; // Pan  X || Left X
             let panY = this.gamepads[pad].axes[1]; // Pan  Y || Left Y
-            let panZ = this.gamepads[pad].axes[2]; // Pan  Z || Right X
+            let rollY = this.gamepads[pad].axes[2]; // Pan  Z || Right X
 
             let rollX = this.gamepads[pad].axes[3]; // Roll X || Right Y
-            let rollY = this.gamepads[pad].axes[4]; // Roll Y || Trigger Left
-            let rollZ = this.gamepads[pad].axes[5]; // Roll Z || Trigger Right
+            //let rollY = this.gamepads[pad].axes[4]; // Roll Y || Trigger Left
+            //let rollZ = this.gamepads[pad].axes[5]; // Roll Z || Trigger Right
 
             if (panX < -this.SPACEMOUSE_THRESHOLD ||
                 panX > this.SPACEMOUSE_THRESHOLD) {
@@ -140,25 +151,25 @@ class GamePad {
                 this.pan.y = panY;
             }
 
-            if (panZ < -this.SPACEMOUSE_THRESHOLD ||
+            /*if (panZ < -this.SPACEMOUSE_THRESHOLD ||
                 panZ > this.SPACEMOUSE_THRESHOLD) {
                 this.pan.z = panZ;
-            }
+            }*/
 
             if (rollX < -this.SPACEMOUSE_THRESHOLD ||
                 rollX > this.SPACEMOUSE_THRESHOLD) {
-                this.roll.x = rollX;
+                this.roll.x = rollX * -1;
             }
 
             if (rollY < -this.SPACEMOUSE_THRESHOLD ||
                 rollY > this.SPACEMOUSE_THRESHOLD) {
-                this.roll.y = rollY;
+                this.roll.y = rollY * -1;
             }
 
-            if (rollZ < -this.SPACEMOUSE_THRESHOLD ||
+            /*if (rollZ < -this.SPACEMOUSE_THRESHOLD ||
                 rollZ > this.SPACEMOUSE_THRESHOLD) {
                 this.roll.z = rollZ;
-            }
+            }*/
         }
     }
 

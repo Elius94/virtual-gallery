@@ -330,9 +330,9 @@ select {
 #copyright {
     position: absolute;
     bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 10px;
+    right: 10px;
+    width: auto;
+    padding: 5px;
     box-sizing: border-box;
     text-align: center;
     -moz-user-select: none;

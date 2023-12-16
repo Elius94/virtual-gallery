@@ -24,6 +24,7 @@ import "./touch-pad.css"
 import TouchControls from './touch-controller/TouchControls.js';
 import ArtworkFrame, { ARTWORK_BASE_PATH, ArtworkFrameOptions } from './Artwork.js';
 import { ArtworksCollection } from './Artworks.js';
+import { GamePad } from './Gamepad.js';
 
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -173,6 +174,9 @@ let playerOnFloor = false;
 const keyStates = {} as { [key: string]: boolean };
 let ctrlKey = false;
 let shiftKey = false;
+
+// Gamepad
+const gamepad = new GamePad();
 
 if (!isMobile) {
   document.addEventListener('keydown', (event) => {
@@ -420,18 +424,15 @@ function getForwardVector() {
 }
 
 function getSideVector() {
-
   camera.getWorldDirection(playerDirection);
   playerDirection.y = 0;
   playerDirection.normalize();
   playerDirection.cross(camera.up);
-
+  
   return playerDirection;
-
 }
 
 function controls(deltaTime: number) {
-
   // gives a bit of air control
   const speedDelta = deltaTime * (playerOnFloor ? 25 : 8);
 
@@ -449,6 +450,21 @@ function controls(deltaTime: number) {
 
   if (keyStates['KeyD']) {
     playerVelocity.add(getSideVector().multiplyScalar(speedDelta));
+  }
+
+  // Manage Gamepad
+  if (gamepad.pan.x < -0.1 || gamepad.pan.x > 0.1) {
+    playerVelocity.add(getSideVector().multiplyScalar(gamepad.pan.x * speedDelta));
+  }
+  if (gamepad.pan.y < -0.1 || gamepad.pan.y > 0.1) {
+    playerVelocity.add(getForwardVector().multiplyScalar(gamepad.pan.y * -speedDelta));
+  }
+
+  if (gamepad.roll.x < -0.1 || gamepad.roll.x > 0.1) {
+    camera.rotation.x += gamepad.roll.x * speedDelta;
+  }
+  if (gamepad.roll.y < -0.1 || gamepad.roll.y > 0.1) {
+    camera.rotation.y += gamepad.roll.y * speedDelta;
   }
 
   if (playerOnFloor) {
@@ -765,6 +781,8 @@ function animate() {
   const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME;
   // we look for collisions in substeps to mitigate the risk of
   // an object traversing another too quickly for detection.
+  gamepad.update();
+  
   for (let i = 0; i < STEPS_PER_FRAME; i++) {
     controls(deltaTime);
     updatePlayer(deltaTime);

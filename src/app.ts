@@ -72,14 +72,23 @@ const scene = new THREE.Scene();
 //const texture = txtLoader.load('./textures/general/DSC02177-Modifica.jpg');
 // Add spotlights to the scene
 const spotLights = [
-  new THREE.SpotLight(0xffffff, 1, 0, Math.PI / 2, 0.5),
+  new THREE.SpotLight(0xffd080, 100, 0, 0.5, 1, 1),
 ];
 
-spotLights[0].position.set(10, 10, 0);
-spotLights[0].target.position.set(0, 0, 0);
+spotLights[0].position.set(0, 3.5, 0);
 spotLights[0].castShadow = true;
+spotLights[0].shadow.mapSize.width = 1024;
+spotLights[0].shadow.mapSize.height = 1024;
+spotLights[0].shadow.camera.near = 1;
+spotLights[0].shadow.camera.far = 10;
+spotLights[0].shadow.focus = 1;
 
-// scene.add(spotLights[0]);
+const lightHelper = new THREE.SpotLightHelper(spotLights[0]);
+scene.add(spotLights[0]);
+scene.add(lightHelper);
+
+/* @ts-ignore */
+window.spotLights = spotLights;
 
 const texture = txtLoader.load(
   `./textures/general/${textureQuality}/sky.jpg`,
@@ -101,8 +110,8 @@ scene.add(fillLight1);
 
 const directionalLight = new THREE.DirectionalLight(0xfcba03, 3);
 directionalLight.color.setHSL(0.1, 1, 0.95);
-directionalLight.rotation.set(0.3,-0.4,1.65);
-directionalLight.position.set(510,60,-200);
+directionalLight.rotation.set(0.3, -0.4, 1.65);
+directionalLight.position.set(510, 60, -200);
 directionalLight.position.multiplyScalar(30);
 directionalLight.castShadow = true;
 directionalLight.shadow.camera.near = 0.01;

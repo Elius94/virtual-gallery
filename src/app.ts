@@ -25,7 +25,8 @@ import TouchControls from './touch-controller/TouchControls.js';
 import ArtworkFrame, { ARTWORK_BASE_PATH, ArtworkFrameOptions } from './Artwork.js';
 import { ArtworksCollection } from './Artworks.js';
 import { GamePad } from './Gamepad.js';
-import { Bullets } from './Bullets.js';
+// import { Bullets } from './Bullets.js';
+// import { Npc } from './Npc.js';
 
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -40,10 +41,13 @@ if (args.has('quality')) {
 }
 // check if in the url there is "debug" parameter
 let debug = window.location.search.indexOf('debug') !== -1;
-let aa_sl = textureQuality === "HD" ? 4 : textureQuality === "MD" ? 2 : 1;
+let monitor = window.location.search.indexOf('monitor') !== -1;
+let aa_sl = 1; //textureQuality === "HD" ? 4 : textureQuality === "MD" ? 2 : 1;
 if (isMobile) aa_sl = 1;
 let aa_unbiased = false;
-let stats: any = null;
+let fpsStats: any = null;
+let msStats: any = null;
+let memoryStats: any = null;
 let selectedShader = GammaCorrectionShader
 let selectedToneMapping = "ACESFilmicToneMapping";
 let toneMappingExp = 0.80;
@@ -112,7 +116,7 @@ scene.add(directionalLight);
 
 const container = document.getElementById('container-renderer') as HTMLElement;
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, failIfMajorPerformanceCaveat: true });
 renderer.setPixelRatio(isMobile ? window.devicePixelRatio : 1);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
@@ -180,15 +184,19 @@ let shiftKey = false;
 const gamepad = new GamePad();
 
 // Bullets
-const bullets = new Bullets({
-  scene,
-  camera,
-  playerCollider,
-  playerDirection,
-  playerVelocity,
-  mouseTime: 0,
-  gravity: GRAVITY
-});
+// const bullets = new Bullets({
+//   scene,
+//   camera,
+//   playerCollider,
+//   playerDirection,
+//   playerVelocity,
+//   mouseTime: 0,
+//   gravity: GRAVITY
+// });
+
+// const npc = new Npc({
+//   scene
+// });
 
 if (!isMobile) {
   document.addEventListener('keydown', (event) => {
@@ -206,13 +214,13 @@ if (!isMobile) {
   container.addEventListener('mousedown', () => {
     //console.log('requestPointerLock')
     document.body.requestPointerLock();
-    bullets.setMouseTime(performance.now());
+    // bullets.setMouseTime(performance.now());
   });
 
-  document.addEventListener('mouseup', () => {
-    //console.log('exitPointerLock')
-    if ( document.pointerLockElement !== null) bullets.throwBall();
-  });
+  // document.addEventListener('mouseup', () => {
+  //   //console.log('exitPointerLock')
+  //   if ( document.pointerLockElement !== null) bullets.throwBall();
+  // });
 
   document.body.addEventListener('mousemove', (event) => {
     if (document.pointerLockElement === document.body) {
@@ -268,7 +276,7 @@ closeArtworkDetailsPanel.addEventListener('click', () => {
 
   artworkDetailsPanel.classList.remove('show-05');
   artworkDetailsPanel.classList.add('hidden-05');
-  
+
   // restore pointer lock
   hideInstructions();
   document.body.requestPointerLock();
@@ -446,7 +454,7 @@ function getSideVector() {
   playerDirection.y = 0;
   playerDirection.normalize();
   playerDirection.cross(camera.up);
-  
+
   return playerDirection;
 }
 
@@ -492,10 +500,10 @@ function controls(deltaTime: number) {
   }
 
   // manage shooting
-  if (gamepad.buttons[1] && performance.now() - bullets.getMouseTime() > 100) {
-    bullets.setMouseTime(performance.now());
-    bullets.throwBall();
-  }
+  // if (gamepad.buttons[1] && performance.now() - bullets.getMouseTime() > 100) {
+  //   bullets.setMouseTime(performance.now());
+  //   bullets.throwBall();
+  // }
 
   if (TUNING) {
     const precision = shiftKey ? 0.1 : 1;
@@ -648,13 +656,30 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
     .onChange(function (value: boolean) {
       helper.visible = value;
       debug = value;
+    });
+  gui.add({ monitor: monitor }, 'monitor')
+    .onChange(function (value: boolean) {
+      monitor = value;
       if (value) {
-        stats = new (Stats as any)();
-        stats.domElement.style.position = 'absolute';
-        stats.domElement.style.top = '0px';
-        container.appendChild(stats.domElement);
+        fpsStats = new (Stats as any)();
+        fpsStats.showPanel(0);
+        fpsStats.domElement.style.position = 'absolute';
+        fpsStats.domElement.style.top = '0px';
+        msStats = new (Stats as any)();
+        msStats.showPanel(1);
+        msStats.domElement.style.position = 'absolute';
+        msStats.domElement.style.top = '50px';
+        memoryStats = new (Stats as any)();
+        memoryStats.showPanel(2);
+        memoryStats.domElement.style.position = 'absolute';
+        memoryStats.domElement.style.top = '100px';
+        container.appendChild(fpsStats.domElement);
+        container.appendChild(msStats.domElement);
+        container.appendChild(memoryStats.domElement);
       } else {
-        container.removeChild(stats.domElement);
+        container.removeChild(fpsStats.domElement);
+        container.removeChild(msStats.domElement);
+        container.removeChild(memoryStats.domElement);
       }
     });
   gui.add({ "Camera Focal Lenght": cameraFocalLenght }, 'Camera Focal Lenght', [8, 10, 12, 14, 20, 28, 35, 50, 70, 100, 135, 200])
@@ -791,6 +816,33 @@ function teleportPlayerIfOob() {
   }
 }
 
+let frames = 0;
+let lastTime = performance.now();
+function checkPerformance() {
+  frames++;
+  var time = (performance || Date).now();
+  if (time >= lastTime + 1000) {
+    let fps = (frames * 1000) / (time - lastTime);
+    // console.log(fps);
+    lastTime = time;
+    frames = 0;
+
+    if (fps < 30 && aa_sl > 1) {
+      console.log('low fps', fps);
+      // decrease antialiasing
+      aa_sl--;
+      taaRenderPass.sampleLevel = aa_sl;
+      console.log('anti aliasing decreased to:', aa_sl);
+    } else if (fps > 60 && aa_sl < 4) {
+      console.log('high fps', fps);
+      // increase antialiasing
+      aa_sl++;
+      taaRenderPass.sampleLevel = aa_sl;
+      console.log('anti aliasing increased to:', aa_sl);
+    }
+  }
+}
+
 function animate() {
   // Calcola il Cono di Visione o Rettangolo di Selezione
   const selectionCone = calculateSelectionCone();
@@ -806,11 +858,12 @@ function animate() {
   // we look for collisions in substeps to mitigate the risk of
   // an object traversing another too quickly for detection.
   gamepad.update();
-  
+  // npc.update(deltaTime);
+
   for (let i = 0; i < STEPS_PER_FRAME; i++) {
     controls(deltaTime);
     updatePlayer(deltaTime);
-    bullets.updateSpheres(deltaTime, worldOctree);
+    // bullets.updateSpheres(deltaTime, worldOctree);
     teleportPlayerIfOob();
   }
 
@@ -819,7 +872,13 @@ function animate() {
 
   renderer.render(scene, camera);
   composer.render();
-  if (debug) stats.update();
+  if (monitor) {
+    fpsStats.update();
+    msStats.update();
+    memoryStats.update();
+  }
+  checkPerformance();
+
   //requestAnimationFrame(animate);
   renderer.setAnimationLoop(animate);
   // const delta = clock.getDelta();

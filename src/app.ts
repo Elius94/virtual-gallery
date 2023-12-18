@@ -10,10 +10,10 @@ import { OctreeHelper } from 'three/examples/jsm/helpers/OctreeHelper.js';
 
 import { Capsule } from 'three/examples/jsm/math/Capsule.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+// import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 
-import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
+// import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 import { TAARenderPass } from "three/examples/jsm/postprocessing/TAARenderPass.js";
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { GUI } from './lil-gui.module.min.js';
@@ -48,8 +48,8 @@ let aa_unbiased = false;
 let fpsStats: any = null;
 let msStats: any = null;
 let memoryStats: any = null;
-let selectedShader = GammaCorrectionShader
-let selectedToneMapping = "ACESFilmicToneMapping";
+// let selectedShader = GammaCorrectionShader
+let selectedToneMapping = "LinearToneMapping";
 let toneMappingExp = 0.80;
 let toneMappingMethods = {
   sRGBEncoding: THREE.sRGBEncoding,
@@ -79,10 +79,10 @@ spotLights[0].position.set(10, 10, 0);
 spotLights[0].target.position.set(0, 0, 0);
 spotLights[0].castShadow = true;
 
-scene.add(spotLights[0]);
+// scene.add(spotLights[0]);
 
 const texture = txtLoader.load(
-  `./textures/general/${textureQuality}/PANO0001_pano.jpg`,
+  `./textures/general/${textureQuality}/sky.jpg`,
   () => {
     const rt = new THREE.WebGLCubeRenderTarget(texture.image.height);
     rt.fromEquirectangularTexture(renderer, texture);
@@ -95,23 +95,32 @@ const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerH
 camera.setFocalLength(cameraFocalLenght);
 camera.rotation.order = 'YXZ';
 
-const fillLight1 = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.2);
+const fillLight1 = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
 fillLight1.position.set(2, 1, 1);
 scene.add(fillLight1);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(- 5, 20, - 1);
+const directionalLight = new THREE.DirectionalLight(0xfcba03, 3);
+directionalLight.color.setHSL(0.1, 1, 0.95);
+directionalLight.rotation.set(0.3,-0.4,1.65);
+directionalLight.position.set(510,60,-200);
+directionalLight.position.multiplyScalar(30);
 directionalLight.castShadow = true;
 directionalLight.shadow.camera.near = 0.01;
-directionalLight.shadow.camera.far = 500;
+directionalLight.shadow.camera.far = 3500;
 directionalLight.shadow.camera.right = 30;
 directionalLight.shadow.camera.left = - 30;
 directionalLight.shadow.camera.top = 30;
 directionalLight.shadow.camera.bottom = - 30;
-directionalLight.shadow.mapSize.width = 1024;
-directionalLight.shadow.mapSize.height = 1024;
+directionalLight.shadow.mapSize.width = 2048;
+directionalLight.shadow.mapSize.height = 2048;
 directionalLight.shadow.radius = 4;
-directionalLight.shadow.bias = - 0.00006;
+directionalLight.shadow.bias = -0.00001;
+
+// const dirLightHelper = new THREE.DirectionalLightHelper( directionalLight, 1000 );
+// scene.add( dirLightHelper );
+
+/* @ts-ignore */
+window.directionalLight = directionalLight;
 scene.add(directionalLight);
 
 const container = document.getElementById('container-renderer') as HTMLElement;
@@ -156,7 +165,7 @@ composer.addPass(taaRenderPass); // default
 const rp = new RenderPass(scene, camera);
 rp.enabled = false;
 composer.addPass(rp);
-composer.addPass(new ShaderPass(selectedShader));
+// composer.addPass(new ShaderPass(selectedShader));
 
 composer.setPixelRatio(window.devicePixelRatio);
 composer.setSize(window.innerWidth, window.innerHeight)

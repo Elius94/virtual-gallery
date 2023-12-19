@@ -17,7 +17,7 @@
   "author": "Elia Lazzari",
   "license": "MIT",
   "dependencies": {
-    "three": "^0.150.1",
+    "three": "^0.159.0",
     "typescript": "^4.9.5"
   },
   "bugs": {
@@ -29,7 +29,7 @@
     "url": "git+https://github.com/Elius94/virtual-gallery.git"
   },
   "devDependencies": {
-    "@types/three": "^0.149.0",
+    "@types/three": "^0.159.0",
     "compress-images": "^2.0.5",
     "esbuild": "^0.17.5",
     "eslint": "^8.33.0",

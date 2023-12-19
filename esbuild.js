@@ -22,12 +22,12 @@ const outputQualityFormats = {
     },
     "SD": {
         size: 2048,
-        quality: 40,
+        quality: 60,
         format: "webp"
     },
     "LD": {
         size: 1024,
-        quality: 20,
+        quality: 60,
         format: "webp"
     }
 }
@@ -187,7 +187,7 @@ if (dev) {
     // Enable serve mode
     await ctx.serve({
         servedir: "public",
-        port: 8080,
+        port: 3000,
         onRequest: (args) => {
             if (args.path === "/") {
                 args.path = "/index.html"

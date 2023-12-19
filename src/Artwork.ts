@@ -60,7 +60,7 @@ class ArtworkFrame {
         new THREE.TextureLoader().loadAsync(`${ARTWORK_BASE_PATH}${quality}/${picture}`).then((texture) => {
             // Create a material using the texture
             texture.anisotropy = 16;
-            texture.encoding = THREE.sRGBEncoding;
+            texture.colorSpace = THREE.SRGBColorSpace;
             const material = new THREE.MeshBasicMaterial({ map: texture, });
 
             // Calculate the aspect ratio of the texture

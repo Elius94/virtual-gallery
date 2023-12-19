@@ -155,12 +155,12 @@ select {
 
 @media all and (max-width: 640px) {
     .lil-gui.root {
-        right: auto;
+        left: auto;
         top: 0;
         max-height: 50%;
         max-width: 80%;
         bottom: auto;
-        left: 0;
+        right: 0;
     }
 }
 

@@ -10,14 +10,13 @@ import { OctreeHelper } from 'three/examples/jsm/helpers/OctreeHelper.js';
 
 import { Capsule } from 'three/examples/jsm/math/Capsule.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-// import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+// import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 
-// import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js'
+import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js'
 import { TAARenderPass } from "three/examples/jsm/postprocessing/TAARenderPass.js";
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { GUI } from './lil-gui.module.min.js';
-//import ArtworkFrame, { ArtworkFrameOptions } from './Artwork.js';
 
 import "./app.css"
 import "./touch-pad.css"
@@ -31,7 +30,7 @@ import { GamePad } from './Gamepad.js';
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-const TUNING = true;
+const TUNING = false;
 
 let textureQuality = isMobile ? "MD" : "HD";
 // Check if quality argument is passed in the url and set the texture quality accordingly
@@ -44,14 +43,15 @@ let debug = window.location.search.indexOf('debug') !== -1;
 let monitor = window.location.search.indexOf('monitor') !== -1;
 let aa_sl = 1; //textureQuality === "HD" ? 4 : textureQuality === "MD" ? 2 : 1;
 if (isMobile) aa_sl = 1;
-let aa_unbiased = false;
+let aa_unbiased = true;
 let fpsStats: any = null;
 let msStats: any = null;
 let memoryStats: any = null;
-// let selectedShader = GammaCorrectionShader
-let selectedToneMapping = "LinearToneMapping";
+let selectedShader = GammaCorrectionShader
+let selectedToneMapping = "ACESFilmicToneMapping";
 let toneMappingExp = 1.0;
 let toneMappingMethods = {
+  NoToneMapping: THREE.NoToneMapping,
   LinearToneMapping: THREE.LinearToneMapping,
   ReinhardToneMapping: THREE.ReinhardToneMapping,
   CineonToneMapping: THREE.CineonToneMapping,
@@ -68,17 +68,17 @@ const txtLoader = new THREE.TextureLoader();
 const clock = new THREE.Clock();
 const scene = new THREE.Scene();
 
-function createSpotlight(color: string) {
-  const newObj = new THREE.SpotLight(color, 100);
+// function createSpotlight(color: string) {
+//   const newObj = new THREE.SpotLight(color, 100);
 
-  newObj.castShadow = true;
-  newObj.angle = 0.5;
-  newObj.penumbra = 0.8;
-  newObj.decay = 2;
-  newObj.distance = 50;
+//   newObj.castShadow = true;
+//   newObj.angle = 0.5;
+//   newObj.penumbra = 0.8;
+//   newObj.decay = 2;
+//   newObj.distance = 50;
 
-  return newObj;
-}
+//   return newObj;
+// }
 
 // scene.fog = new THREE.Fog(0x88ccee, 0, 170);
 
@@ -115,48 +115,41 @@ scene.add(directionalLight);
 
 //const texture = txtLoader.load('./textures/general/DSC02177-Modifica.jpg');
 // Add spotlights to the scene
-const spotLights = [
-  createSpotlight('#fcba03')
-];
+// const spotLights = [
+//   createSpotlight('#fcba03')
+// ];
 
-spotLights[0].position.set(0, 3.5, 0);
-spotLights[0].castShadow = true;
-spotLights[0].shadow.mapSize.width = 1024;
-spotLights[0].shadow.mapSize.height = 1024;
-spotLights[0].shadow.camera.near = 1;
-spotLights[0].shadow.camera.far = 10;
-spotLights[0].shadow.focus = 1;
+// spotLights[0].position.set(0, 3.5, 0);
+// spotLights[0].castShadow = true;
+// spotLights[0].shadow.mapSize.width = 1024;
+// spotLights[0].shadow.mapSize.height = 1024;
+// spotLights[0].shadow.camera.near = 1;
+// spotLights[0].shadow.camera.far = 10;
+// spotLights[0].shadow.focus = 1;
 
-const lightHelper = new THREE.SpotLightHelper(spotLights[0]);
-scene.add(spotLights[0]);
-scene.add(lightHelper);
+// const lightHelper = new THREE.SpotLightHelper(spotLights[0]);
+// scene.add(spotLights[0]);
+// scene.add(lightHelper);
 
 /* @ts-ignore */
-window.spotLights = spotLights;
+// window.spotLights = spotLights;
 
 const container = document.getElementById('container-renderer') as HTMLElement;
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, failIfMajorPerformanceCaveat: true, alpha: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, failIfMajorPerformanceCaveat: true });
 renderer.setPixelRatio(isMobile ? window.devicePixelRatio : 1);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
-//renderer.outputEncoding = THREE.sRGBEncoding;
-// renderer.toneMapping = THREE.LinearToneMapping;
-// renderer.toneMapping = THREE.ReinhardToneMapping;
-// renderer.toneMapping = THREE.CineonToneMapping;
-// renderer.toneMapping = THREE.ACESFilmicToneMapping;
-// renderer.toneMapping = THREE.CustomToneMapping;
+// renderer.outputColorSpace = THREE.NoColorSpace;
 
-/* @ts-ignore */
-renderer.toneMapping = toneMappingMethods[selectedToneMapping];
+renderer.toneMapping = THREE.LinearToneMapping;
 renderer.toneMappingExposure = toneMappingExp;
 renderer.xr.enabled = true;
-//renderer.gammaFactor = 2.0;
 container.appendChild(renderer.domElement);
 
 /*const texture = */txtLoader.load(
-  `./textures/general/${textureQuality}/sky.jpg`,
+  `./textures/general/HD/sky.jpg`, // Alway use HD texture for the sky
   (t) => {
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     pmremGenerator.compileEquirectangularShader();
@@ -172,7 +165,7 @@ const target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight
   minFilter: THREE.LinearFilter,
   magFilter: THREE.LinearFilter,
   format: THREE.RGBAFormat,
-  encoding: THREE.sRGBEncoding,
+  encoding: THREE.sRGBEncoding, // todo: open issue on three.js
   //type: THREE.FloatType,
   anisotropy: renderer.capabilities.getMaxAnisotropy()
 });
@@ -184,10 +177,10 @@ taaRenderPass.unbiased = aa_unbiased;
 taaRenderPass.sampleLevel = aa_sl;
 composer.addPass(taaRenderPass); // default
 
-const rp = new RenderPass(scene, camera);
-rp.enabled = false;
-composer.addPass(rp);
-// composer.addPass(new ShaderPass(selectedShader));
+// const rp = new RenderPass(scene, camera);
+// rp.enabled = false;
+// composer.addPass(rp);
+composer.addPass(new ShaderPass(selectedShader));
 
 composer.setPixelRatio(window.devicePixelRatio);
 composer.setSize(window.innerWidth, window.innerHeight)
@@ -623,12 +616,7 @@ if (isMobile) {
 const manager = new THREE.LoadingManager();
 
 manager.onLoad = function () {
-  console.log('Loading complete!');
-  progress.classList.add('hidden');
-  if (!isMobile) {
-    showInstructions();
-  }
-  animate();
+  console.log('GLTF Loading complete!');
 };
 
 manager.onError = function (url) {
@@ -646,30 +634,26 @@ const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('./loader/');
 loader.setDRACOLoader(dracoLoader);
 
-// function loadModel(url: string) {
-//   return new Promise((resolve, reject) => {
-//     loader.load(url, (gltf) => {
-//       resolve(gltf)
-//     }, undefined, (error) => {
-//       reject(error)
-//     })
-//   })
-// }
-
-startWelcomeTextCarosel(0);
-
-// load a room model
-// Room model 1
-//loader.load('vr_art_gallery_-_el1.glb', (gltf: GLTF) => {
-loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
+async function init() {
+  // load a room model
+  const gltf: GLTF = await loader.loadAsync('Virtual Gallery.gltf')
   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
   //gltf.scene.scale.set(0.05, 0.05, 0.05);
 
   gltf.scene.traverse((child: any) => {
     if (child.material) {
       child.material.anisotropy = maxAnisotropy;
-      child.material.encoding = THREE.sRGBEncoding;
-      child.material.envMapIntensity = 1;
+      child.material.envMapIntensity = 1.0;
+      // make more transparent the glass
+      if (child.material.name === "glass") {
+        child.material.transparent = true;
+        child.material.opacity = 0.08;
+      }
+      // Make the floor more reflective
+      if (child.material.name === "floor" || child.material.name === "walls") {
+        child.material.roughness = 0.1;
+        child.material.metalness = 0.5;
+      }
       child.material.needsUpdate = true;
     }
     if (child.isMesh) {
@@ -682,7 +666,7 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
     }
   });
 
-  renderer.compile(gltf.scene, camera );
+  await renderer.compileAsync(gltf.scene, camera, scene);
 
   worldOctree.fromGraphNode(gltf.scene);
   scene.add(gltf.scene);
@@ -754,12 +738,14 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
         selectedToneMapping = value;
         /* @ts-ignore */
         renderer.toneMapping = toneMappingMethods[selectedToneMapping];
+        refreshScene();
       });
 
     gui.add({ "Tone Mapping Exposure": toneMappingExp }, 'Tone Mapping Exposure')
       .onChange(function (value: number) {
         toneMappingExp = value;
         renderer.toneMappingExposure = toneMappingExp;
+        refreshScene();
       });
     // Organizzazione mostra!!!
     gui.add({ "Selected Artwork": selectedArtwork }, 'Selected Artwork', ArtworksCollection.map((_a, i) => i))
@@ -777,12 +763,12 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
   /*loadModel(plant3).then((gltf: any) => {
     //for (let i = 0; i < 2; i++) {
       gltf.scene.rotation.set(0, 0, 0);
-
+ 
       mixers.push(new THREE.AnimationMixer(gltf.scene))
       const mixer = mixers[0];
       const action = mixer.clipAction((gltf as any).animations[0]);
       action.play();
-
+ 
       gltf.scene.traverse((child: any) => {
         if (child.isMesh && child.material.map !== null) {
           child.castShadow = true;
@@ -790,7 +776,7 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
           if (child.material.map) {
             child.material.map.anisotropy = maxAnisotropy;
             child.material.map.encoding = THREE.sRGBEncoding;
-
+ 
           }
         }
       });
@@ -802,12 +788,12 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
     gltf.scene.scale.set(2, 2, 2);
     gltf.scene.position.set(-13, 0, 4);
     gltf.scene.rotation.set(0, 0, 0);
-
+ 
     mixers.push(new THREE.AnimationMixer(gltf.scene))
     const mixer = mixers[mixers.length - 1];
     const action = mixer.clipAction((gltf as any).animations[0]);
     action.play();
-
+ 
     gltf.scene.traverse((child: any) => {
       if (child.isMesh && child.material.map !== null) {
         child.castShadow = true;
@@ -815,7 +801,7 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
         if (child.material.map) {
           child.material.map.anisotropy = maxAnisotropy;
           child.material.map.encoding = THREE.sRGBEncoding;
-
+ 
         }
       }
     });
@@ -845,7 +831,14 @@ loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
     /* @ts-ignore */
     window.pictures.push(new ArtworkFrame(picture))
   }
-});
+
+  // Loading done
+  progress.classList.add('hidden');
+  if (!isMobile) {
+    showInstructions();
+  }
+  animate();
+}
 
 function teleportPlayerIfOob() {
   if (camera.position.y <= - 25) {
@@ -873,15 +866,26 @@ function checkPerformance() {
       // decrease antialiasing
       aa_sl--;
       taaRenderPass.sampleLevel = aa_sl;
+      refreshScene();
       console.log('anti aliasing decreased to:', aa_sl);
     } else if (fps > 60 && aa_sl < 4) {
       console.log('high fps', fps);
       // increase antialiasing
       aa_sl++;
       taaRenderPass.sampleLevel = aa_sl;
+
+      refreshScene();
       console.log('anti aliasing increased to:', aa_sl);
     }
   }
+}
+
+function refreshScene() {
+  scene.traverse((child: any) => {
+    if (child.material) {
+      child.material.needsUpdate = true;
+    }
+  });
 }
 
 function animate() {
@@ -926,3 +930,6 @@ function animate() {
   // const delta = clock.getDelta();
   // mixers.forEach(mixer => mixer.update(delta))
 }
+
+startWelcomeTextCarosel(0);
+init();

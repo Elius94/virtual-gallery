@@ -6,8 +6,8 @@
 
 .rotation-pad .region {
     position: absolute;
-    width: 100px;
-    height: 100px;
+    width: 20vw;
+    height: 20vw;
     background: radial-gradient(rgba(218, 225, 230, 0.25) 5%, rgba(218, 225, 230, 0.50) 95%),
         url("./textures/controller/cam.png") center center no-repeat;
     border: 2px solid rgba(218, 225, 230, 0.25);
@@ -40,8 +40,8 @@
 
 .movement-pad .region {
     position: absolute;
-    width: 100px;
-    height: 100px;
+    width: 20vw;
+    height: 20vw;
     background: radial-gradient(rgba(218, 225, 230, 0.25) 5%, rgba(218, 225, 230, 0.50) 95%),
         url("./textures/controller/nav.png") center center no-repeat;
     border: 2px solid rgba(218, 225, 230, 0.25);
@@ -78,7 +78,7 @@
 	position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     z-index: -1;
 }

@@ -13,7 +13,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 // import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 
-// import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
+// import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js'
 import { TAARenderPass } from "three/examples/jsm/postprocessing/TAARenderPass.js";
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { GUI } from './lil-gui.module.min.js';
@@ -31,7 +31,7 @@ import { GamePad } from './Gamepad.js';
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-const TUNING = false;
+const TUNING = true;
 
 let textureQuality = isMobile ? "MD" : "HD";
 // Check if quality argument is passed in the url and set the texture quality accordingly
@@ -50,9 +50,8 @@ let msStats: any = null;
 let memoryStats: any = null;
 // let selectedShader = GammaCorrectionShader
 let selectedToneMapping = "LinearToneMapping";
-let toneMappingExp = 0.80;
+let toneMappingExp = 1.0;
 let toneMappingMethods = {
-  sRGBEncoding: THREE.sRGBEncoding,
   LinearToneMapping: THREE.LinearToneMapping,
   ReinhardToneMapping: THREE.ReinhardToneMapping,
   CineonToneMapping: THREE.CineonToneMapping,
@@ -69,43 +68,25 @@ const txtLoader = new THREE.TextureLoader();
 const clock = new THREE.Clock();
 const scene = new THREE.Scene();
 
-//const texture = txtLoader.load('./textures/general/DSC02177-Modifica.jpg');
-// Add spotlights to the scene
-const spotLights = [
-  new THREE.SpotLight(0xffd080, 100, 0, 0.5, 1, 1),
-];
+function createSpotlight(color: string) {
+  const newObj = new THREE.SpotLight(color, 100);
 
-spotLights[0].position.set(0, 3.5, 0);
-spotLights[0].castShadow = true;
-spotLights[0].shadow.mapSize.width = 1024;
-spotLights[0].shadow.mapSize.height = 1024;
-spotLights[0].shadow.camera.near = 1;
-spotLights[0].shadow.camera.far = 10;
-spotLights[0].shadow.focus = 1;
+  newObj.castShadow = true;
+  newObj.angle = 0.5;
+  newObj.penumbra = 0.8;
+  newObj.decay = 2;
+  newObj.distance = 50;
 
-const lightHelper = new THREE.SpotLightHelper(spotLights[0]);
-scene.add(spotLights[0]);
-scene.add(lightHelper);
+  return newObj;
+}
 
-/* @ts-ignore */
-window.spotLights = spotLights;
-
-const texture = txtLoader.load(
-  `./textures/general/${textureQuality}/sky.jpg`,
-  () => {
-    const rt = new THREE.WebGLCubeRenderTarget(texture.image.height);
-    rt.fromEquirectangularTexture(renderer, texture);
-    scene.background = rt.texture;
-  });
-
-scene.fog = new THREE.Fog(0x88ccee, 0, 170);
+// scene.fog = new THREE.Fog(0x88ccee, 0, 170);
 
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.setFocalLength(cameraFocalLenght);
 camera.rotation.order = 'YXZ';
 
-const fillLight1 = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
-fillLight1.position.set(2, 1, 1);
+const fillLight1 = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
 scene.add(fillLight1);
 
 const directionalLight = new THREE.DirectionalLight(0xfcba03, 3);
@@ -132,9 +113,30 @@ directionalLight.shadow.bias = -0.00001;
 window.directionalLight = directionalLight;
 scene.add(directionalLight);
 
+//const texture = txtLoader.load('./textures/general/DSC02177-Modifica.jpg');
+// Add spotlights to the scene
+const spotLights = [
+  createSpotlight('#fcba03')
+];
+
+spotLights[0].position.set(0, 3.5, 0);
+spotLights[0].castShadow = true;
+spotLights[0].shadow.mapSize.width = 1024;
+spotLights[0].shadow.mapSize.height = 1024;
+spotLights[0].shadow.camera.near = 1;
+spotLights[0].shadow.camera.far = 10;
+spotLights[0].shadow.focus = 1;
+
+const lightHelper = new THREE.SpotLightHelper(spotLights[0]);
+scene.add(spotLights[0]);
+scene.add(lightHelper);
+
+/* @ts-ignore */
+window.spotLights = spotLights;
+
 const container = document.getElementById('container-renderer') as HTMLElement;
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, failIfMajorPerformanceCaveat: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, failIfMajorPerformanceCaveat: true, alpha: true });
 renderer.setPixelRatio(isMobile ? window.devicePixelRatio : 1);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
@@ -152,6 +154,17 @@ renderer.toneMappingExposure = toneMappingExp;
 renderer.xr.enabled = true;
 //renderer.gammaFactor = 2.0;
 container.appendChild(renderer.domElement);
+
+/*const texture = */txtLoader.load(
+  `./textures/general/${textureQuality}/sky.jpg`,
+  (t) => {
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+    const envMap = pmremGenerator.fromEquirectangular(t).texture;
+
+    scene.background = envMap;
+    scene.environment = envMap;
+  });
 
 document.body.appendChild(VRButton.createButton(renderer));
 
@@ -651,18 +664,28 @@ startWelcomeTextCarosel(0);
 loader.load('Virtual Gallery.gltf', (gltf: GLTF) => {
   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
   //gltf.scene.scale.set(0.05, 0.05, 0.05);
-  scene.add(gltf.scene);
-  worldOctree.fromGraphNode(gltf.scene);
 
   gltf.scene.traverse((child: any) => {
+    if (child.material) {
+      child.material.anisotropy = maxAnisotropy;
+      child.material.encoding = THREE.sRGBEncoding;
+      child.material.envMapIntensity = 1;
+      child.material.needsUpdate = true;
+    }
     if (child.isMesh) {
       child.castShadow = true;
       child.receiveShadow = true;
       if (child.material.map) {
         child.material.map.anisotropy = maxAnisotropy;
       }
+
     }
   });
+
+  renderer.compile(gltf.scene, camera );
+
+  worldOctree.fromGraphNode(gltf.scene);
+  scene.add(gltf.scene);
 
   const helper = new OctreeHelper(worldOctree, 0x00ff00);
   helper.visible = false;
@@ -876,6 +899,7 @@ function animate() {
   // we look for collisions in substeps to mitigate the risk of
   // an object traversing another too quickly for detection.
   gamepad.update();
+  // lightHelper.update()
   // npc.update(deltaTime);
 
   for (let i = 0; i < STEPS_PER_FRAME; i++) {

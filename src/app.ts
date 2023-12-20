@@ -13,7 +13,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 // import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 
-import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js'
+import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 import { TAARenderPass } from "three/examples/jsm/postprocessing/TAARenderPass.js";
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { GUI } from './lil-gui.module.min.js';
@@ -26,6 +26,7 @@ import { ArtworksCollection } from './Artworks.js';
 import { GamePad } from './Gamepad.js';
 // import { Bullets } from './Bullets.js';
 // import { Npc } from './Npc.js';
+// import { GenerativeLandscape } from './GenerativeLandscape.js';
 
 // Check if we are running in a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -82,7 +83,7 @@ const scene = new THREE.Scene();
 
 // scene.fog = new THREE.Fog(0x88ccee, 0, 170);
 
-const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / (window.innerHeight * 1.5), 0.1, 500);
 camera.setFocalLength(cameraFocalLenght);
 camera.rotation.order = 'YXZ';
 
@@ -149,7 +150,7 @@ renderer.xr.enabled = true;
 container.appendChild(renderer.domElement);
 
 /*const texture = */txtLoader.load(
-  `./textures/general/HD/sky.jpg`, // Alway use HD texture for the sky
+  `./textures/general/HD/iceland.jpg`, // Alway use HD texture for the sky
   (t) => {
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     pmremGenerator.compileEquirectangularShader();
@@ -301,6 +302,20 @@ closeArtworkDetailsPanel.addEventListener('click', () => {
   artworkDetailsPanel.classList.remove('show-05');
   artworkDetailsPanel.classList.add('hidden-05');
 
+  // clean the panel
+  const img = document.getElementById('artworkDetailsPanelImage') as HTMLImageElement;
+  img.src = '';
+  const redirectUrl = document.getElementById('artworkDetailsPanelUrl') as HTMLAnchorElement;
+  redirectUrl.href = '';
+  const title = document.getElementById('artworkDetailsPanelTitle') as HTMLElement;
+  title.innerText = '';
+  const description = document.getElementById('artworkDetailsPanelDescription') as HTMLElement;
+  description.innerText = '';
+  const author = document.getElementById('artworkDetailsPanelAuthor') as HTMLElement;
+  author.innerText = '';
+  const year = document.getElementById('artworkDetailsPanelYear') as HTMLElement;
+  year.innerText = '';
+
   // restore pointer lock
   hideInstructions();
   document.body.requestPointerLock();
@@ -342,7 +357,7 @@ if (!isMobile) {
 
 window.addEventListener('resize', onWindowResize);
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = window.innerWidth / (window.innerHeight * 1.5);
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   composer.setSize(window.innerWidth, window.innerHeight);
@@ -756,58 +771,6 @@ async function init() {
 
   gui.close();
 
-  // Add plants to the scene
-  // const plant3 = './additional_models/rigged_indoor-plant_animation_test.glb'
-
-
-  /*loadModel(plant3).then((gltf: any) => {
-    //for (let i = 0; i < 2; i++) {
-      gltf.scene.rotation.set(0, 0, 0);
- 
-      mixers.push(new THREE.AnimationMixer(gltf.scene))
-      const mixer = mixers[0];
-      const action = mixer.clipAction((gltf as any).animations[0]);
-      action.play();
- 
-      gltf.scene.traverse((child: any) => {
-        if (child.isMesh && child.material.map !== null) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-          if (child.material.map) {
-            child.material.map.anisotropy = maxAnisotropy;
-            child.material.map.encoding = THREE.sRGBEncoding;
- 
-          }
-        }
-      });
-      scene.add(gltf.scene);
-      worldOctree.fromGraphNode(gltf.scene);
-    //}
-  })
-  loadModel(plant3).then((gltf: any) => {
-    gltf.scene.scale.set(2, 2, 2);
-    gltf.scene.position.set(-13, 0, 4);
-    gltf.scene.rotation.set(0, 0, 0);
- 
-    mixers.push(new THREE.AnimationMixer(gltf.scene))
-    const mixer = mixers[mixers.length - 1];
-    const action = mixer.clipAction((gltf as any).animations[0]);
-    action.play();
- 
-    gltf.scene.traverse((child: any) => {
-      if (child.isMesh && child.material.map !== null) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-        if (child.material.map) {
-          child.material.map.anisotropy = maxAnisotropy;
-          child.material.map.encoding = THREE.sRGBEncoding;
- 
-        }
-      }
-    });
-    scene.add(gltf.scene);
-  })*/
-
   for (var i = 0; i < ArtworksCollection.length; i++) {
     const picture = {
       picture: ArtworksCollection[i].url,
@@ -831,6 +794,16 @@ async function init() {
     /* @ts-ignore */
     window.pictures.push(new ArtworkFrame(picture))
   }
+
+  // // Load the generative landscape
+  // const landscape = new GenerativeLandscape({ width: 4000, height: 4000, worldWidth: 64, worldDepth: 128 });
+  // await renderer.compileAsync(landscape.mesh, camera, scene);
+  // // translate the terrain to the bottom
+  // landscape.mesh.position.y = -800;
+  // /* @ts-ignore */
+  // window.landscape = landscape;
+  // scene.add(landscape.mesh);
+  // worldOctree.fromGraphNode(landscape.mesh);
 
   // Loading done
   progress.classList.add('hidden');

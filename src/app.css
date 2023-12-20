@@ -5,6 +5,7 @@
     left: 0;
     top: 0;
     background-color: #0000004d;
+    z-index: 88;
 }
 
 #instructions {
@@ -209,7 +210,7 @@ select {
     justify-content: center;
     flex-direction: column;
     background: #000;
-    z-index: 2;
+    z-index: 99999;
 }
 
 #loader-container {

@@ -28,12 +28,18 @@ import { GamePad } from './Gamepad.js';
 // import { Npc } from './Npc.js';
 // import { GenerativeLandscape } from './GenerativeLandscape.js';
 
-// Check if we are running in a mobile device
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+function isMobile() {
+  const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  return regex.test(navigator.userAgent);
+}
+
+function hasTouchSupport() {
+  return 'ontouchstart' in document.documentElement;
+}
 
 const TUNING = false;
 
-let textureQuality = isMobile ? "MD" : "HD";
+let textureQuality = isMobile() ? "MD" : "HD";
 // Check if quality argument is passed in the url and set the texture quality accordingly
 const args = new URLSearchParams(location.search);
 if (args.has('quality')) {
@@ -43,7 +49,7 @@ if (args.has('quality')) {
 let debug = window.location.search.indexOf('debug') !== -1;
 let monitor = window.location.search.indexOf('monitor') !== -1;
 let aa_sl = 1; //textureQuality === "HD" ? 4 : textureQuality === "MD" ? 2 : 1;
-if (isMobile) aa_sl = 1;
+if (isMobile() || hasTouchSupport()) aa_sl = 1;
 let aa_unbiased = true;
 let fpsStats: any = null;
 let msStats: any = null;
@@ -138,7 +144,7 @@ scene.add(directionalLight);
 const container = document.getElementById('container-renderer') as HTMLElement;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, failIfMajorPerformanceCaveat: true });
-renderer.setPixelRatio(isMobile ? window.devicePixelRatio : 1);
+renderer.setPixelRatio(isMobile() || hasTouchSupport() ? window.devicePixelRatio : 1);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
@@ -150,7 +156,7 @@ renderer.xr.enabled = true;
 container.appendChild(renderer.domElement);
 
 /*const texture = */txtLoader.load(
-  `./textures/general/HD/iceland.jpg`, // Alway use HD texture for the sky
+  `./textures/general/HD/iceland.jpg`, // Always use HD texture for the sky
   (t) => {
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     pmremGenerator.compileEquirectangularShader();
@@ -223,7 +229,7 @@ const gamepad = new GamePad();
 //   scene
 // });
 
-if (!isMobile) {
+if (!isMobile() || !hasTouchSupport()) {
   document.addEventListener('keydown', (event) => {
     keyStates[event.code] = true;
     ctrlKey = event.ctrlKey;
@@ -324,7 +330,7 @@ closeArtworkDetailsPanel.addEventListener('click', () => {
 const distanzaMassima = 4; // Soglia di distanza per attivare il cursore
 let highlightedArtwork: ArtworkFrame | undefined = undefined;
 
-if (!isMobile) {
+if (!isMobile() || !hasTouchSupport()) {
   instructions.addEventListener('click', function () {
     hideInstructions();
     document.body.requestPointerLock();
@@ -345,9 +351,9 @@ function showInstructions() {
   blocker.style.display = 'block';*/
 }
 
-if (!isMobile) {
+if (!isMobile() || !hasTouchSupport()) {
   document.addEventListener("pointerlockchange", () => {
-    if (document.pointerLockElement !== document.body) {
+    if (document.pointerLockElement !== document.body && artworkDetailsPanel.classList.contains('hidden-05')) {
       showInstructions();
     } else {
       hideInstructions();
@@ -605,7 +611,7 @@ function controls(deltaTime: number) {
   }
 }
 
-if (isMobile) {
+if (isMobile() || hasTouchSupport()) {
   const padElement = document.getElementById('container3d') as HTMLDivElement
   new TouchControls(padElement) as any
 
@@ -692,7 +698,6 @@ async function init() {
 
   /* @ts-ignore */
   const gui = new GUI({ width: 200 }) as any;
-  gui.add({ "VR Available": VRButton.xrSessionIsGranted }, 'VR Available').listen();
   gui.add({ debug: debug }, 'debug')
     .onChange(function (value: boolean) {
       helper.visible = value;
@@ -808,7 +813,7 @@ async function init() {
 
   // Loading done
   progress.classList.add('hidden');
-  if (!isMobile) {
+  if (!isMobile() || !hasTouchSupport()) {
     showInstructions();
   }
   animate();

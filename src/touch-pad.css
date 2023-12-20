@@ -86,7 +86,7 @@
 }
 
 /* Disable in desktop */
-@media (min-width: 768px) {
+/* @media (min-width: 768px) {
     .rotation-pad {
         display: none;
     }
@@ -102,4 +102,4 @@
     #container3d canvas {
         display: none !important;
     }
-}
+} */

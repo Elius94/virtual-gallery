@@ -15,7 +15,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 import { TAARenderPass } from "three/examples/jsm/postprocessing/TAARenderPass.js";
-import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
+import { VRButton } from './VRButton.js';
 import { GUI } from './lil-gui.module.min.js';
 
 import "./app.css"
@@ -692,6 +692,7 @@ async function init() {
 
   /* @ts-ignore */
   const gui = new GUI({ width: 200 }) as any;
+  gui.add({ "VR Available": VRButton.xrSessionIsGranted }, 'VR Available').listen();
   gui.add({ debug: debug }, 'debug')
     .onChange(function (value: boolean) {
       helper.visible = value;
